@@ -1,0 +1,83 @@
+{
+  "brand": {
+    "name": "Mu'afa",
+    "tagline": "Book your medical appointment with ease"
+  },
+  "nav": {
+    "home": "Home",
+    "facilities": "Facilities",
+    "account": "Account",
+    "bookings": "My Bookings",
+    "facilityDashboard": "Facility Dashboard",
+    "admin": "Admin",
+    "login": "Sign In",
+    "register": "Sign Up",
+    "logout": "Sign Out"
+  },
+  "common": {
+    "loading": "Loading...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "back": "Back",
+    "search": "Search",
+    "price": "Price",
+    "rating": "Rating",
+    "currency": "EGP",
+    "viewDetails": "View Details",
+    "bookNow": "Book Now",
+    "language": "Language"
+  },
+  "home": {
+    "heroTitle": "Your health deserves the best care",
+    "heroSubtitle": "Mu'afa connects you with top medical centers, labs and radiology facilities. Book in minutes.",
+    "ctaBrowse": "Browse Facilities",
+    "ctaJoin": "Join as a Facility",
+    "feature1Title": "Instant Booking",
+    "feature1Desc": "Pick the time that works for you from open slots",
+    "feature2Title": "Secure Wallet",
+    "feature2Desc": "Pay from your wallet, safe and seamless",
+    "feature3Title": "Medical Reports",
+    "feature3Desc": "Receive your reports directly in the app"
+  },
+  "auth": {
+    "loginTitle": "Sign in",
+    "registerTitle": "Create your account",
+    "email": "Email",
+    "password": "Password",
+    "fullName": "Full name",
+    "phone": "Phone number",
+    "accountType": "Account type",
+    "roleUser": "Patient — book appointments",
+    "roleFacility": "Medical facility — accept bookings",
+    "noAccount": "Don't have an account?",
+    "haveAccount": "Already have an account?",
+    "signIn": "Sign in",
+    "signUp": "Sign up",
+    "loginSuccess": "Signed in successfully",
+    "registerSuccess": "Account created successfully",
+    "errorInvalid": "Invalid email or password"
+  },
+  "facilities": {
+    "title": "Medical Facilities",
+    "empty": "No facilities available yet",
+    "session": "Session duration",
+    "minutes": "min",
+    "selectDay": "Select a day",
+    "selectTime": "Select a time",
+    "noSlots": "No available slots on this day",
+    "confirmBooking": "Confirm booking",
+    "bookingSuccess": "Booking confirmed",
+    "bookingFailed": "Could not complete booking",
+    "insufficientBalance": "Insufficient wallet balance"
+  },
+  "days": {
+    "0": "Sunday",
+    "1": "Monday",
+    "2": "Tuesday",
+    "3": "Wednesday",
+    "4": "Thursday",
+    "5": "Friday",
+    "6": "Saturday"
+  }
+}
