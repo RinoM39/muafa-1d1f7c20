@@ -9,38 +9,173 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as RegisterRouteImport } from './routes/register'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as FacilitiesIndexRouteImport } from './routes/facilities.index'
+import { Route as AdminIndexRouteImport } from './routes/admin.index'
+import { Route as AccountIndexRouteImport } from './routes/account.index'
+import { Route as FacilitySetupRouteImport } from './routes/facility.setup'
+import { Route as FacilityDashboardRouteImport } from './routes/facility.dashboard'
+import { Route as FacilitiesFacilityIdRouteImport } from './routes/facilities.$facilityId'
+import { Route as AccountBookingsRouteImport } from './routes/account.bookings'
 
+const RegisterRoute = RegisterRouteImport.update({
+  id: '/register',
+  path: '/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const FacilitiesIndexRoute = FacilitiesIndexRouteImport.update({
+  id: '/facilities/',
+  path: '/facilities/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/admin/',
+  path: '/admin/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AccountIndexRoute = AccountIndexRouteImport.update({
+  id: '/account/',
+  path: '/account/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FacilitySetupRoute = FacilitySetupRouteImport.update({
+  id: '/facility/setup',
+  path: '/facility/setup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FacilityDashboardRoute = FacilityDashboardRouteImport.update({
+  id: '/facility/dashboard',
+  path: '/facility/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FacilitiesFacilityIdRoute = FacilitiesFacilityIdRouteImport.update({
+  id: '/facilities/$facilityId',
+  path: '/facilities/$facilityId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AccountBookingsRoute = AccountBookingsRouteImport.update({
+  id: '/account/bookings',
+  path: '/account/bookings',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/register': typeof RegisterRoute
+  '/account/bookings': typeof AccountBookingsRoute
+  '/facilities/$facilityId': typeof FacilitiesFacilityIdRoute
+  '/facility/dashboard': typeof FacilityDashboardRoute
+  '/facility/setup': typeof FacilitySetupRoute
+  '/account/': typeof AccountIndexRoute
+  '/admin/': typeof AdminIndexRoute
+  '/facilities/': typeof FacilitiesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/register': typeof RegisterRoute
+  '/account/bookings': typeof AccountBookingsRoute
+  '/facilities/$facilityId': typeof FacilitiesFacilityIdRoute
+  '/facility/dashboard': typeof FacilityDashboardRoute
+  '/facility/setup': typeof FacilitySetupRoute
+  '/account': typeof AccountIndexRoute
+  '/admin': typeof AdminIndexRoute
+  '/facilities': typeof FacilitiesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/register': typeof RegisterRoute
+  '/account/bookings': typeof AccountBookingsRoute
+  '/facilities/$facilityId': typeof FacilitiesFacilityIdRoute
+  '/facility/dashboard': typeof FacilityDashboardRoute
+  '/facility/setup': typeof FacilitySetupRoute
+  '/account/': typeof AccountIndexRoute
+  '/admin/': typeof AdminIndexRoute
+  '/facilities/': typeof FacilitiesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/login'
+    | '/register'
+    | '/account/bookings'
+    | '/facilities/$facilityId'
+    | '/facility/dashboard'
+    | '/facility/setup'
+    | '/account/'
+    | '/admin/'
+    | '/facilities/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/login'
+    | '/register'
+    | '/account/bookings'
+    | '/facilities/$facilityId'
+    | '/facility/dashboard'
+    | '/facility/setup'
+    | '/account'
+    | '/admin'
+    | '/facilities'
+  id:
+    | '__root__'
+    | '/'
+    | '/login'
+    | '/register'
+    | '/account/bookings'
+    | '/facilities/$facilityId'
+    | '/facility/dashboard'
+    | '/facility/setup'
+    | '/account/'
+    | '/admin/'
+    | '/facilities/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  LoginRoute: typeof LoginRoute
+  RegisterRoute: typeof RegisterRoute
+  AccountBookingsRoute: typeof AccountBookingsRoute
+  FacilitiesFacilityIdRoute: typeof FacilitiesFacilityIdRoute
+  FacilityDashboardRoute: typeof FacilityDashboardRoute
+  FacilitySetupRoute: typeof FacilitySetupRoute
+  AccountIndexRoute: typeof AccountIndexRoute
+  AdminIndexRoute: typeof AdminIndexRoute
+  FacilitiesIndexRoute: typeof FacilitiesIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/register': {
+      id: '/register'
+      path: '/register'
+      fullPath: '/register'
+      preLoaderRoute: typeof RegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,21 +183,70 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/facilities/': {
+      id: '/facilities/'
+      path: '/facilities'
+      fullPath: '/facilities/'
+      preLoaderRoute: typeof FacilitiesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/': {
+      id: '/admin/'
+      path: '/admin'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/account/': {
+      id: '/account/'
+      path: '/account'
+      fullPath: '/account/'
+      preLoaderRoute: typeof AccountIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/facility/setup': {
+      id: '/facility/setup'
+      path: '/facility/setup'
+      fullPath: '/facility/setup'
+      preLoaderRoute: typeof FacilitySetupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/facility/dashboard': {
+      id: '/facility/dashboard'
+      path: '/facility/dashboard'
+      fullPath: '/facility/dashboard'
+      preLoaderRoute: typeof FacilityDashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/facilities/$facilityId': {
+      id: '/facilities/$facilityId'
+      path: '/facilities/$facilityId'
+      fullPath: '/facilities/$facilityId'
+      preLoaderRoute: typeof FacilitiesFacilityIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/account/bookings': {
+      id: '/account/bookings'
+      path: '/account/bookings'
+      fullPath: '/account/bookings'
+      preLoaderRoute: typeof AccountBookingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  LoginRoute: LoginRoute,
+  RegisterRoute: RegisterRoute,
+  AccountBookingsRoute: AccountBookingsRoute,
+  FacilitiesFacilityIdRoute: FacilitiesFacilityIdRoute,
+  FacilityDashboardRoute: FacilityDashboardRoute,
+  FacilitySetupRoute: FacilitySetupRoute,
+  AccountIndexRoute: AccountIndexRoute,
+  AdminIndexRoute: AdminIndexRoute,
+  FacilitiesIndexRoute: FacilitiesIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-  }
-}
