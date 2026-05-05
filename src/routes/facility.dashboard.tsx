@@ -50,11 +50,16 @@ function FacilityDashboard() {
     <div className="container mx-auto max-w-5xl px-4 py-10">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <h1 className="text-3xl font-bold">Facility Dashboard</h1>
-        <Button asChild>
-          <Link to="/facility/setup">
-            <Plus className="me-2 h-4 w-4" /> Create facility
-          </Link>
-        </Button>
+        <div className="flex gap-2">
+          <Button asChild variant="outline">
+            <Link to="/facility/bookings">View bookings</Link>
+          </Button>
+          <Button asChild>
+            <Link to="/facility/setup">
+              <Plus className="me-2 h-4 w-4" /> Create facility
+            </Link>
+          </Button>
+        </div>
       </div>
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2">
