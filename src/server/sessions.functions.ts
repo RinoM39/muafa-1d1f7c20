@@ -50,7 +50,7 @@ export const endSession = createServerFn({ method: "POST" })
       user_id: booking.user_id,
       booking_id: booking.id,
       amount: -Number(booking.price),
-      type: "spend",
+      type: "release",
       status: "completed",
       note: "Session completed",
     });
@@ -69,7 +69,7 @@ export const endSession = createServerFn({ method: "POST" })
       user_id: userId,
       booking_id: booking.id,
       amount: Number(booking.price),
-      type: "earn",
+      type: "payout",
       status: "completed",
       note: "Earnings from session",
     });
