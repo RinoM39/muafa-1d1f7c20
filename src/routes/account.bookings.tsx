@@ -1,8 +1,15 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Star } from "lucide-react";
+import { submitRating } from "@/server/ratings.functions";
 
 export const Route = createFileRoute("/account/bookings")({
   beforeLoad: async () => {
@@ -19,24 +26,33 @@ interface BookingRow {
   status: string;
   price: number;
   report_url: string | null;
-  facility: { name: string; image_url: string | null } | null;
+  facility: { id: string; name: string; image_url: string | null } | null;
 }
 
 function BookingsPage() {
   const [bookings, setBookings] = useState<BookingRow[] | null>(null);
+  const [rated, setRated] = useState<Set<string>>(new Set());
+  const rateFn = useServerFn(submitRating);
 
-  useEffect(() => {
-    (async () => {
-      const { data: u } = await supabase.auth.getUser();
-      if (!u.user) return;
-      const { data } = await supabase
-        .from("bookings")
-        .select("id,slot_start,slot_end,status,price,report_url,facility:facilities(name,image_url)")
-        .eq("user_id", u.user.id)
-        .order("slot_start", { ascending: false });
-      setBookings((data as unknown as BookingRow[]) ?? []);
-    })();
-  }, []);
+  const load = async () => {
+    const { data: u } = await supabase.auth.getUser();
+    if (!u.user) return;
+    const { data } = await supabase
+      .from("bookings")
+      .select("id,slot_start,slot_end,status,price,report_url,facility:facilities(id,name,image_url)")
+      .eq("user_id", u.user.id)
+      .order("slot_start", { ascending: false });
+    setBookings((data as unknown as BookingRow[]) ?? []);
+
+    const { data: r } = await supabase
+      .from("ratings")
+      .select("booking_id")
+      .eq("rater_id", u.user.id)
+      .eq("direction", "user_to_facility");
+    setRated(new Set((r ?? []).map((x) => x.booking_id)));
+  };
+
+  useEffect(() => { load(); }, []);
 
   const now = Date.now();
   const upcoming = (bookings ?? []).filter((b) => new Date(b.slot_start).getTime() > now && b.status === "upcoming");
@@ -52,14 +68,25 @@ function BookingsPage() {
         </TabsList>
         <TabsContent value="upcoming" className="mt-4 space-y-3">
           {upcoming.length === 0 && <p className="text-sm text-muted-foreground">No upcoming bookings.</p>}
-          {upcoming.map((b) => (
-            <BookingCard key={b.id} b={b} />
-          ))}
+          {upcoming.map((b) => <BookingCard key={b.id} b={b} />)}
         </TabsContent>
         <TabsContent value="past" className="mt-4 space-y-3">
           {past.length === 0 && <p className="text-sm text-muted-foreground">No past bookings yet.</p>}
           {past.map((b) => (
-            <BookingCard key={b.id} b={b} />
+            <BookingCard
+              key={b.id}
+              b={b}
+              showRate={b.status === "completed" && !rated.has(b.id)}
+              onRate={async (stars, comment) => {
+                try {
+                  await rateFn({ data: { bookingId: b.id, stars, comment, direction: "user_to_facility" } });
+                  toast.success("Thanks for rating!");
+                  load();
+                } catch (e) {
+                  toast.error(e instanceof Error ? e.message : "Failed");
+                }
+              }}
+            />
           ))}
         </TabsContent>
       </Tabs>
@@ -67,26 +94,52 @@ function BookingsPage() {
   );
 }
 
-function BookingCard({ b }: { b: BookingRow }) {
-  const date = new Date(b.slot_start);
+function BookingCard({
+  b, showRate, onRate,
+}: {
+  b: BookingRow;
+  showRate?: boolean;
+  onRate?: (stars: number, comment: string) => Promise<void>;
+}) {
+  const [open, setOpen] = useState(false);
+  const [stars, setStars] = useState(5);
+  const [comment, setComment] = useState("");
+
   return (
-    <Card className="flex items-center gap-4 p-4">
+    <Card className="flex flex-wrap items-center gap-4 p-4">
       <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-muted">
-        {b.facility?.image_url && (
-          <img src={b.facility.image_url} alt="" className="h-full w-full object-cover" />
-        )}
+        {b.facility?.image_url && <img src={b.facility.image_url} alt="" className="h-full w-full object-cover" />}
       </div>
       <div className="flex-1 min-w-0">
         <h3 className="truncate font-semibold">{b.facility?.name ?? "—"}</h3>
-        <p className="text-sm text-muted-foreground">{date.toLocaleString()}</p>
+        <p className="text-sm text-muted-foreground">{new Date(b.slot_start).toLocaleString()}</p>
         <p className="mt-1 text-xs uppercase tracking-wide text-primary">{b.status}</p>
       </div>
-      <div className="text-end">
+      <div className="flex flex-col items-end gap-2">
         <div className="font-semibold">{Number(b.price).toFixed(2)}</div>
         {b.report_url && (
           <a href={b.report_url} target="_blank" rel="noreferrer" className="text-xs text-primary hover:underline">
             View report
           </a>
+        )}
+        {showRate && onRate && (
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+              <Button size="sm" variant="outline">Rate</Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader><DialogTitle>Rate your visit</DialogTitle></DialogHeader>
+              <div className="flex gap-1">
+                {[1,2,3,4,5].map((n) => (
+                  <button key={n} type="button" onClick={() => setStars(n)}>
+                    <Star className={`h-7 w-7 ${n <= stars ? "fill-warning text-warning" : "text-muted-foreground"}`} />
+                  </button>
+                ))}
+              </div>
+              <Input value={comment} onChange={(e) => setComment(e.target.value)} placeholder="Optional comment" />
+              <Button onClick={async () => { await onRate(stars, comment); setOpen(false); }}>Submit</Button>
+            </DialogContent>
+          </Dialog>
         )}
       </div>
     </Card>

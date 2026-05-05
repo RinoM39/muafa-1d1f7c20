@@ -17,7 +17,9 @@ import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AccountIndexRouteImport } from './routes/account.index'
 import { Route as FacilitySetupRouteImport } from './routes/facility.setup'
 import { Route as FacilityDashboardRouteImport } from './routes/facility.dashboard'
+import { Route as FacilityBookingsRouteImport } from './routes/facility.bookings'
 import { Route as FacilitiesFacilityIdRouteImport } from './routes/facilities.$facilityId'
+import { Route as AdminWalletRequestsRouteImport } from './routes/admin.wallet-requests'
 import { Route as AccountBookingsRouteImport } from './routes/account.bookings'
 
 const RegisterRoute = RegisterRouteImport.update({
@@ -60,9 +62,19 @@ const FacilityDashboardRoute = FacilityDashboardRouteImport.update({
   path: '/facility/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
+const FacilityBookingsRoute = FacilityBookingsRouteImport.update({
+  id: '/facility/bookings',
+  path: '/facility/bookings',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const FacilitiesFacilityIdRoute = FacilitiesFacilityIdRouteImport.update({
   id: '/facilities/$facilityId',
   path: '/facilities/$facilityId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminWalletRequestsRoute = AdminWalletRequestsRouteImport.update({
+  id: '/admin/wallet-requests',
+  path: '/admin/wallet-requests',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AccountBookingsRoute = AccountBookingsRouteImport.update({
@@ -76,7 +88,9 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/account/bookings': typeof AccountBookingsRoute
+  '/admin/wallet-requests': typeof AdminWalletRequestsRoute
   '/facilities/$facilityId': typeof FacilitiesFacilityIdRoute
+  '/facility/bookings': typeof FacilityBookingsRoute
   '/facility/dashboard': typeof FacilityDashboardRoute
   '/facility/setup': typeof FacilitySetupRoute
   '/account/': typeof AccountIndexRoute
@@ -88,7 +102,9 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/account/bookings': typeof AccountBookingsRoute
+  '/admin/wallet-requests': typeof AdminWalletRequestsRoute
   '/facilities/$facilityId': typeof FacilitiesFacilityIdRoute
+  '/facility/bookings': typeof FacilityBookingsRoute
   '/facility/dashboard': typeof FacilityDashboardRoute
   '/facility/setup': typeof FacilitySetupRoute
   '/account': typeof AccountIndexRoute
@@ -101,7 +117,9 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/account/bookings': typeof AccountBookingsRoute
+  '/admin/wallet-requests': typeof AdminWalletRequestsRoute
   '/facilities/$facilityId': typeof FacilitiesFacilityIdRoute
+  '/facility/bookings': typeof FacilityBookingsRoute
   '/facility/dashboard': typeof FacilityDashboardRoute
   '/facility/setup': typeof FacilitySetupRoute
   '/account/': typeof AccountIndexRoute
@@ -115,7 +133,9 @@ export interface FileRouteTypes {
     | '/login'
     | '/register'
     | '/account/bookings'
+    | '/admin/wallet-requests'
     | '/facilities/$facilityId'
+    | '/facility/bookings'
     | '/facility/dashboard'
     | '/facility/setup'
     | '/account/'
@@ -127,7 +147,9 @@ export interface FileRouteTypes {
     | '/login'
     | '/register'
     | '/account/bookings'
+    | '/admin/wallet-requests'
     | '/facilities/$facilityId'
+    | '/facility/bookings'
     | '/facility/dashboard'
     | '/facility/setup'
     | '/account'
@@ -139,7 +161,9 @@ export interface FileRouteTypes {
     | '/login'
     | '/register'
     | '/account/bookings'
+    | '/admin/wallet-requests'
     | '/facilities/$facilityId'
+    | '/facility/bookings'
     | '/facility/dashboard'
     | '/facility/setup'
     | '/account/'
@@ -152,7 +176,9 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   RegisterRoute: typeof RegisterRoute
   AccountBookingsRoute: typeof AccountBookingsRoute
+  AdminWalletRequestsRoute: typeof AdminWalletRequestsRoute
   FacilitiesFacilityIdRoute: typeof FacilitiesFacilityIdRoute
+  FacilityBookingsRoute: typeof FacilityBookingsRoute
   FacilityDashboardRoute: typeof FacilityDashboardRoute
   FacilitySetupRoute: typeof FacilitySetupRoute
   AccountIndexRoute: typeof AccountIndexRoute
@@ -218,11 +244,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FacilityDashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/facility/bookings': {
+      id: '/facility/bookings'
+      path: '/facility/bookings'
+      fullPath: '/facility/bookings'
+      preLoaderRoute: typeof FacilityBookingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/facilities/$facilityId': {
       id: '/facilities/$facilityId'
       path: '/facilities/$facilityId'
       fullPath: '/facilities/$facilityId'
       preLoaderRoute: typeof FacilitiesFacilityIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/wallet-requests': {
+      id: '/admin/wallet-requests'
+      path: '/admin/wallet-requests'
+      fullPath: '/admin/wallet-requests'
+      preLoaderRoute: typeof AdminWalletRequestsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/account/bookings': {
@@ -240,7 +280,9 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   RegisterRoute: RegisterRoute,
   AccountBookingsRoute: AccountBookingsRoute,
+  AdminWalletRequestsRoute: AdminWalletRequestsRoute,
   FacilitiesFacilityIdRoute: FacilitiesFacilityIdRoute,
+  FacilityBookingsRoute: FacilityBookingsRoute,
   FacilityDashboardRoute: FacilityDashboardRoute,
   FacilitySetupRoute: FacilitySetupRoute,
   AccountIndexRoute: AccountIndexRoute,
