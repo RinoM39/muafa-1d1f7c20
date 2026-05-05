@@ -29,11 +29,12 @@ export const Route = createFileRoute("/facility/bookings")({
 
 interface Row {
   id: string;
+  user_id: string;
   slot_start: string;
   status: string;
   price: number;
   report_url: string | null;
-  user: { full_name: string | null; phone: string | null } | null;
+  user?: { full_name: string | null; phone: string | null } | null;
   facility: { id: string; name: string } | null;
 }
 
@@ -50,10 +51,18 @@ function FacilityBookings() {
     if (ids.length === 0) { setRows([]); return; }
     const { data } = await supabase
       .from("bookings")
-      .select("id,slot_start,status,price,report_url,user:profiles!bookings_user_id_fkey(full_name,phone),facility:facilities(id,name)")
+      .select("id,user_id,slot_start,status,price,report_url,facility:facilities(id,name)")
       .in("facility_id", ids)
       .order("slot_start", { ascending: false });
-    setRows((data as unknown as Row[]) ?? []);
+    const list = (data as unknown as Row[]) ?? [];
+    const userIds = Array.from(new Set(list.map((r) => r.user_id)));
+    if (userIds.length > 0) {
+      const { data: profs } = await supabase
+        .from("profiles").select("id,full_name,phone").in("id", userIds);
+      const map = new Map((profs ?? []).map((p) => [p.id, p]));
+      list.forEach((r) => { r.user = map.get(r.user_id) ?? null; });
+    }
+    setRows(list);
   };
 
   useEffect(() => { load(); }, []);
