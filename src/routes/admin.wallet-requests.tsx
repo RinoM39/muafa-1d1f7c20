@@ -24,7 +24,7 @@ interface Req {
   status: string;
   created_at: string;
   user_id: string;
-  user: { full_name: string | null; phone: string | null } | null;
+  user?: { full_name: string | null; phone: string | null } | null;
 }
 
 function WalletRequestsAdmin() {
@@ -35,9 +35,17 @@ function WalletRequestsAdmin() {
   const load = async () => {
     const { data } = await supabase
       .from("wallet_requests")
-      .select("id,amount,status,created_at,user_id,user:profiles!wallet_requests_user_id_fkey(full_name,phone)")
+      .select("id,amount,status,created_at,user_id")
       .order("created_at", { ascending: false });
-    setRows((data as unknown as Req[]) ?? []);
+    const list = (data as unknown as Req[]) ?? [];
+    const ids = Array.from(new Set(list.map((r) => r.user_id)));
+    if (ids.length > 0) {
+      const { data: profs } = await supabase
+        .from("profiles").select("id,full_name,phone").in("id", ids);
+      const map = new Map((profs ?? []).map((p) => [p.id, p]));
+      list.forEach((r) => { r.user = map.get(r.user_id) ?? null; });
+    }
+    setRows(list);
   };
   useEffect(() => { load(); }, []);
 
