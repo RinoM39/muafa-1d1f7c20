@@ -10,11 +10,12 @@ if (!i18n.isInitialized) {
     .use(initReactI18next)
     .init({
       resources: { ar: { translation: ar }, en: { translation: en } },
+      lng: "ar",
       fallbackLng: "ar",
       supportedLngs: ["ar", "en"],
       interpolation: { escapeValue: false },
       detection: {
-        order: ["localStorage", "navigator"],
+        order: ["localStorage"],
         caches: ["localStorage"],
         lookupLocalStorage: "muafa.lang",
       },
