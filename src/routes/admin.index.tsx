@@ -1,7 +1,8 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/admin/")({
   beforeLoad: async () => {
@@ -43,9 +44,14 @@ function AdminDashboard() {
 
   return (
     <div className="container mx-auto max-w-5xl px-4 py-10">
-      <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+        <Button asChild>
+          <Link to="/admin/wallet-requests">Wallet top-up queue</Link>
+        </Button>
+      </div>
       <p className="mt-2 text-muted-foreground">
-        Full controls: bans, top-up approvals, and analytics will appear here.
+        Approve top-ups, manage users and facilities, and watch growth.
       </p>
 
       <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
