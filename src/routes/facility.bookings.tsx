@@ -1,4 +1,5 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
+import { requireAuth } from "@/lib/route-guards";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
@@ -20,10 +21,7 @@ import { endSession } from "@/server/sessions.functions";
 import { submitRating } from "@/server/ratings.functions";
 
 export const Route = createFileRoute("/facility/bookings")({
-  beforeLoad: async () => {
-    const { data } = await supabase.auth.getUser();
-    if (!data.user) throw redirect({ to: "/login", search: { redirect: "/facility/bookings" } });
-  },
+  beforeLoad: () => requireAuth("/facility/bookings"),
   component: FacilityBookings,
 });
 
