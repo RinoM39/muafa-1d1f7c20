@@ -35,12 +35,37 @@ function BookingsPage() {
   const load = async () => {
     const { data: u } = await supabase.auth.getUser();
     if (!u.user) return;
-    const { data } = await supabase
+    const { data: rows, error } = await supabase
       .from("bookings")
-      .select("id,slot_start,slot_end,status,price,report_url,facility:facilities(id,name,image_url)")
+      .select("id,slot_start,slot_end,status,price,report_url,facility_id")
       .eq("user_id", u.user.id)
       .order("slot_start", { ascending: false });
-    setBookings((data as unknown as BookingRow[]) ?? []);
+    if (error) {
+      console.error("[bookings] load failed", error);
+      toast.error("Failed to load bookings");
+      setBookings([]);
+      return;
+    }
+    const facilityIds = Array.from(new Set((rows ?? []).map((b) => b.facility_id)));
+    let facilityMap: Record<string, { id: string; name: string; image_url: string | null }> = {};
+    if (facilityIds.length > 0) {
+      const { data: fs } = await supabase
+        .from("facilities")
+        .select("id,name,image_url")
+        .in("id", facilityIds);
+      facilityMap = Object.fromEntries((fs ?? []).map((f) => [f.id, f]));
+    }
+    setBookings(
+      (rows ?? []).map((b) => ({
+        id: b.id,
+        slot_start: b.slot_start,
+        slot_end: b.slot_end,
+        status: b.status,
+        price: b.price,
+        report_url: b.report_url,
+        facility: facilityMap[b.facility_id] ?? null,
+      })) as BookingRow[],
+    );
 
     const { data: r } = await supabase
       .from("ratings")

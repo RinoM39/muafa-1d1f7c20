@@ -96,13 +96,28 @@ function FacilityDetails() {
     if (!selectedIso) return;
     setLoading(true);
     try {
+      // Pre-check: fast UX guard before the server-side unique constraint kicks in.
+      const { data: existing } = await supabase
+        .from("bookings")
+        .select("id,status")
+        .eq("facility_id", facilityId)
+        .eq("slot_start", selectedIso)
+        .neq("status", "cancelled")
+        .maybeSingle();
+      if (existing) {
+        setBookedIsos((prev) => new Set(prev).add(selectedIso));
+        setSelectedIso(null);
+        toast.error("This slot is already booked.");
+        return;
+      }
+
       await bookFn({ data: { facilityId, slotStartIso: selectedIso } });
       toast.success(t("facilities.bookingSuccess"));
       navigate({ to: "/account/bookings" });
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "";
       if (msg.includes("INSUFFICIENT_BALANCE")) toast.error(t("facilities.insufficientBalance"));
-      else if (msg.includes("SLOT_TAKEN")) toast.error("Slot just taken — please pick another");
+      else if (msg.includes("SLOT_TAKEN")) toast.error("This slot is already booked.");
       else toast.error(t("facilities.bookingFailed"));
     } finally {
       setLoading(false);
