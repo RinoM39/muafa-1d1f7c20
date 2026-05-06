@@ -1,4 +1,5 @@
-import { createFileRoute, redirect, useNavigate, useSearch } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, useSearch } from "@tanstack/react-router";
+import { requireAuth } from "@/lib/route-guards";
 import { useEffect, useState } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
@@ -14,10 +15,7 @@ const searchSchema = z.object({ id: z.string().uuid().optional() });
 
 export const Route = createFileRoute("/facility/setup")({
   validateSearch: (s) => searchSchema.parse(s),
-  beforeLoad: async () => {
-    const { data } = await supabase.auth.getUser();
-    if (!data.user) throw redirect({ to: "/login", search: { redirect: "/facility/setup" } });
-  },
+  beforeLoad: () => requireAuth("/facility/setup"),
   component: FacilitySetup,
 });
 

@@ -1,4 +1,5 @@
-import { createFileRoute, redirect, Link } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { requireAdmin } from "@/lib/route-guards";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
@@ -9,12 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { decideWalletRequest, setBanned } from "@/server/admin.functions";
 
 export const Route = createFileRoute("/admin/wallet-requests")({
-  beforeLoad: async () => {
-    const { data } = await supabase.auth.getUser();
-    if (!data.user) throw redirect({ to: "/login", search: { redirect: "/admin/wallet-requests" } });
-    const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", data.user.id);
-    if (!roles?.some((r) => r.role === "admin")) throw redirect({ to: "/" });
-  },
+  beforeLoad: () => requireAdmin("/admin/wallet-requests"),
   component: WalletRequestsAdmin,
 });
 

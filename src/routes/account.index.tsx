@@ -1,4 +1,5 @@
-import { createFileRoute, Link, redirect } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { requireAuth } from "@/lib/route-guards";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -17,10 +18,7 @@ import {
 } from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/account/")({
-  beforeLoad: async () => {
-    const { data } = await supabase.auth.getUser();
-    if (!data.user) throw redirect({ to: "/login", search: { redirect: "/account" } });
-  },
+  beforeLoad: () => requireAuth("/account"),
   component: AccountPage,
 });
 
