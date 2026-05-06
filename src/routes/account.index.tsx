@@ -41,7 +41,29 @@ function AccountPage() {
   };
 
   useEffect(() => {
-    load();
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    (async () => {
+      await load();
+      const { data: u } = await supabase.auth.getUser();
+      if (!u.user) return;
+      channel = supabase
+        .channel(`wallet:${u.user.id}`)
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "wallets", filter: `user_id=eq.${u.user.id}` },
+          (payload) => {
+            const row = payload.new as { balance?: number; pending?: number } | null;
+            if (row) setWallet({ balance: Number(row.balance ?? 0), pending: Number(row.pending ?? 0) });
+          },
+        )
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "wallet_requests", filter: `user_id=eq.${u.user.id}` },
+          () => { load(); },
+        )
+        .subscribe();
+    })();
+    return () => { if (channel) supabase.removeChannel(channel); };
   }, []);
 
   const submitTopup = async () => {
