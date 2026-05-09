@@ -226,13 +226,28 @@ function FacilityDetails() {
           <p className="mt-4 text-sm text-muted-foreground">{t("facilities.noSlots")}</p>
         )}
 
-        {user && facility.owner_id === user.id ? (
-          <p className="mt-6 text-sm text-muted-foreground">You cannot book your own facility.</p>
-        ) : (
-          <Button onClick={handleBook} disabled={!selectedIso || loading} className="mt-6 w-full md:w-auto">
-            {loading ? t("common.loading") : t("facilities.confirmBooking")}
-          </Button>
-        )}
+        {(() => {
+          const isOwnFacility = !!user && facility.owner_id === user.id;
+          const disabled = isOwnFacility || !selectedIso || loading;
+          return (
+            <div className="mt-6 space-y-2">
+              <Button
+                onClick={handleBook}
+                disabled={disabled}
+                className="w-full md:w-auto"
+                title={isOwnFacility ? "You cannot book your own facility." : undefined}
+              >
+                {loading ? t("common.loading") : t("facilities.confirmBooking")}
+              </Button>
+              {isOwnFacility && (
+                <p className="text-sm text-muted-foreground">You cannot book your own facility.</p>
+              )}
+              {!isOwnFacility && !selectedIso && (
+                <p className="text-sm text-muted-foreground">Please select a time slot to continue.</p>
+              )}
+            </div>
+          );
+        })()}
       </Card>
     </div>
   );
