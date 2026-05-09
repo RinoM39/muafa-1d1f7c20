@@ -76,13 +76,14 @@ function BookingsPage() {
   };
 
   useEffect(() => {
-    load();
     let channel: ReturnType<typeof supabase.channel> | null = null;
+    let cancelled = false;
     (async () => {
+      await load();
       const { data: u } = await supabase.auth.getUser();
-      if (!u.user) return;
-      channel = supabase
-        .channel(`bookings:${u.user.id}`)
+      if (!u.user || cancelled) return;
+      channel = supabase.channel(`bookings-${u.user.id}-${Math.random().toString(36).slice(2)}`);
+      channel
         .on(
           "postgres_changes",
           { event: "*", schema: "public", table: "bookings", filter: `user_id=eq.${u.user.id}` },
@@ -90,7 +91,10 @@ function BookingsPage() {
         )
         .subscribe();
     })();
-    return () => { if (channel) supabase.removeChannel(channel); };
+    return () => {
+      cancelled = true;
+      if (channel) supabase.removeChannel(channel);
+    };
   }, []);
 
   const now = Date.now();

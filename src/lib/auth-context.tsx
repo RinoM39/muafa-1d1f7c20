@@ -36,6 +36,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
+    // Patch fetch once on the client so /_serverFn/* requests carry the
+    // Supabase bearer token (requireSupabaseAuth middleware needs it).
+    if (typeof window !== "undefined" && !(window as unknown as { __sfnFetchPatched?: boolean }).__sfnFetchPatched) {
+      const orig = window.fetch.bind(window);
+      window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
+        if (url.includes("/_serverFn/")) {
+          const { data } = await supabase.auth.getSession();
+          const token = data.session?.access_token;
+          if (token) {
+            const headers = new Headers(init?.headers ?? (input instanceof Request ? input.headers : undefined));
+            if (!headers.has("authorization")) headers.set("authorization", `Bearer ${token}`);
+            return orig(input, { ...init, headers });
+          }
+        }
+        return orig(input, init);
+      };
+      (window as unknown as { __sfnFetchPatched?: boolean }).__sfnFetchPatched = true;
+    }
+
     // Set up listener FIRST
     const {
       data: { subscription },
