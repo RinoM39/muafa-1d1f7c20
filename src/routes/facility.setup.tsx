@@ -114,8 +114,50 @@ function FacilitySetup() {
           <Field label="Description">
             <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
           </Field>
-          <Field label="Image URL">
-            <Input value={form.image_url} onChange={(e) => setForm({ ...form, image_url: e.target.value })} />
+          <Field label="Facility image">
+            <div className="space-y-3">
+              <label
+                htmlFor="facility-image-upload"
+                className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-input p-6 text-center transition hover:border-primary hover:bg-accent/30"
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={async (e) => {
+                  e.preventDefault();
+                  const file = e.dataTransfer.files?.[0];
+                  if (file) await handleImageUpload(file);
+                }}
+              >
+                <span className="text-sm text-muted-foreground">
+                  {uploading ? "Uploading..." : "Drag & drop an image, or click to browse"}
+                </span>
+                <span className="text-xs text-muted-foreground">PNG / JPG / WEBP</span>
+                <input
+                  id="facility-image-upload"
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (file) await handleImageUpload(file);
+                  }}
+                />
+              </label>
+              {form.image_url && (
+                <div className="relative inline-block">
+                  <img
+                    src={form.image_url}
+                    alt="Facility preview"
+                    className="h-32 w-32 rounded-lg border object-cover"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setForm({ ...form, image_url: "" })}
+                    className="absolute -top-2 -end-2 rounded-full bg-destructive px-2 py-0.5 text-xs text-destructive-foreground shadow"
+                  >
+                    ✕
+                  </button>
+                </div>
+              )}
+            </div>
           </Field>
           <Field label="Google Maps link">
             <Input value={form.location_url} onChange={(e) => setForm({ ...form, location_url: e.target.value })} />
