@@ -50,7 +50,7 @@ function FacilityDetails() {
     (async () => {
       const { data: f } = await supabase
         .from("facilities")
-        .select("id,name,description,image_url,location_url,phone,price,session_duration_min,start_time,end_time,working_days,avg_rating,ratings_count")
+        .select("id,name,description,image_url,location_url,phone,price,session_duration_min,start_time,end_time,working_days,avg_rating,ratings_count,owner_id")
         .eq("id", facilityId)
         .maybeSingle();
       setFacility(f as Facility | null);
