@@ -75,7 +75,23 @@ function BookingsPage() {
     setRated(new Set((r ?? []).map((x) => x.booking_id)));
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    (async () => {
+      const { data: u } = await supabase.auth.getUser();
+      if (!u.user) return;
+      channel = supabase
+        .channel(`bookings:${u.user.id}`)
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "bookings", filter: `user_id=eq.${u.user.id}` },
+          () => load(),
+        )
+        .subscribe();
+    })();
+    return () => { if (channel) supabase.removeChannel(channel); };
+  }, []);
 
   const now = Date.now();
   const upcoming = (bookings ?? []).filter((b) => new Date(b.slot_start).getTime() > now && b.status === "upcoming");
