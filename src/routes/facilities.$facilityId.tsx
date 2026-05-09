@@ -116,6 +116,7 @@ function FacilityDetails() {
       toast.success(t("facilities.bookingSuccess"));
       navigate({ to: "/account/bookings" });
     } catch (e: unknown) {
+      console.error("[booking] failed", e);
       const msg = e instanceof Error ? e.message : "";
       if (msg.includes("INSUFFICIENT_BALANCE")) toast.error(t("facilities.insufficientBalance"));
       else if (msg.includes("SLOT_TAKEN")) toast.error("This slot is already booked.");
