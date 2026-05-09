@@ -47,7 +47,7 @@ function AccountPage() {
       const { data: u } = await supabase.auth.getUser();
       if (!u.user) return;
       channel = supabase
-        .channel(`wallet:${u.user.id}`)
+        .channel(`wallet:${u.user.id}:${Math.random().toString(36).slice(2)}`)
         .on(
           "postgres_changes",
           { event: "*", schema: "public", table: "wallets", filter: `user_id=eq.${u.user.id}` },
