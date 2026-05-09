@@ -30,6 +30,7 @@ interface Facility {
   working_days: number[];
   avg_rating: number;
   ratings_count: number;
+  owner_id: string;
 }
 
 function FacilityDetails() {
