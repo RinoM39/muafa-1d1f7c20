@@ -118,6 +118,7 @@ function FacilityDetails() {
       const msg = e instanceof Error ? e.message : "";
       if (msg.includes("INSUFFICIENT_BALANCE")) toast.error(t("facilities.insufficientBalance"));
       else if (msg.includes("SLOT_TAKEN")) toast.error("This slot is already booked.");
+      else if (msg.includes("OWN_FACILITY")) toast.error("You cannot book your own facility.");
       else toast.error(t("facilities.bookingFailed"));
     } finally {
       setLoading(false);
