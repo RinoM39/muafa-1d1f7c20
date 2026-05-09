@@ -226,7 +226,7 @@ function FacilityDetails() {
           <p className="mt-4 text-sm text-muted-foreground">{t("facilities.noSlots")}</p>
         )}
 
-        {user && facility && (facility as Facility & { owner_id?: string }).owner_id === user.id ? (
+        {user && facility.owner_id === user.id ? (
           <p className="mt-6 text-sm text-muted-foreground">You cannot book your own facility.</p>
         ) : (
           <Button onClick={handleBook} disabled={!selectedIso || loading} className="mt-6 w-full md:w-auto">
