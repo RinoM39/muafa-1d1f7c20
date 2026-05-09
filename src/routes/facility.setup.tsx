@@ -25,6 +25,7 @@ function FacilitySetup() {
   const navigate = useNavigate();
   const { id } = useSearch({ from: "/facility/setup" });
 
+  const [uploading, setUploading] = useState(false);
   const [form, setForm] = useState({
     name: "",
     description: "",
