@@ -30,6 +30,7 @@ interface Facility {
   working_days: number[];
   avg_rating: number;
   ratings_count: number;
+  owner_id: string;
 }
 
 function FacilityDetails() {
@@ -49,7 +50,7 @@ function FacilityDetails() {
     (async () => {
       const { data: f } = await supabase
         .from("facilities")
-        .select("id,name,description,image_url,location_url,phone,price,session_duration_min,start_time,end_time,working_days,avg_rating,ratings_count")
+        .select("id,name,description,image_url,location_url,phone,price,session_duration_min,start_time,end_time,working_days,avg_rating,ratings_count,owner_id")
         .eq("id", facilityId)
         .maybeSingle();
       setFacility(f as Facility | null);
@@ -118,6 +119,7 @@ function FacilityDetails() {
       const msg = e instanceof Error ? e.message : "";
       if (msg.includes("INSUFFICIENT_BALANCE")) toast.error(t("facilities.insufficientBalance"));
       else if (msg.includes("SLOT_TAKEN")) toast.error("This slot is already booked.");
+      else if (msg.includes("OWN_FACILITY")) toast.error("You cannot book your own facility.");
       else toast.error(t("facilities.bookingFailed"));
     } finally {
       setLoading(false);
@@ -224,9 +226,13 @@ function FacilityDetails() {
           <p className="mt-4 text-sm text-muted-foreground">{t("facilities.noSlots")}</p>
         )}
 
-        <Button onClick={handleBook} disabled={!selectedIso || loading} className="mt-6 w-full md:w-auto">
-          {loading ? t("common.loading") : t("facilities.confirmBooking")}
-        </Button>
+        {user && facility.owner_id === user.id ? (
+          <p className="mt-6 text-sm text-muted-foreground">You cannot book your own facility.</p>
+        ) : (
+          <Button onClick={handleBook} disabled={!selectedIso || loading} className="mt-6 w-full md:w-auto">
+            {loading ? t("common.loading") : t("facilities.confirmBooking")}
+          </Button>
+        )}
       </Card>
     </div>
   );
