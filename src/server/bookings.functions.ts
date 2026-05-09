@@ -27,7 +27,7 @@ export const createBooking = createServerFn({ method: "POST" })
       .maybeSingle();
     if (facErr || !facility) throw new Error("Facility not found");
     if (!facility.is_active || facility.is_banned) throw new Error("Facility unavailable");
-    if (facility.owner_id === userId) throw new Error("Cannot book your own facility");
+    if (facility.owner_id === userId) throw new Error("OWN_FACILITY");
 
     // 2. Check wallet
     const { data: wallet } = await supabaseAdmin
