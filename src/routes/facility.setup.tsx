@@ -70,6 +70,38 @@ function FacilitySetup() {
     }));
   };
 
+  const handleImageUpload = async (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select an image file");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image must be smaller than 5MB");
+      return;
+    }
+    setUploading(true);
+    const { data: u } = await supabase.auth.getUser();
+    if (!u.user) {
+      setUploading(false);
+      return;
+    }
+    const ext = file.name.split(".").pop() ?? "jpg";
+    const path = `${u.user.id}/${Date.now()}.${ext}`;
+    const { error: upErr } = await supabase.storage
+      .from("facility-images")
+      .upload(path, file, { cacheControl: "3600", upsert: false });
+    if (upErr) {
+      console.error("[upload] failed", upErr);
+      toast.error(upErr.message);
+      setUploading(false);
+      return;
+    }
+    const { data: pub } = supabase.storage.from("facility-images").getPublicUrl(path);
+    setForm((f) => ({ ...f, image_url: pub.publicUrl }));
+    setUploading(false);
+    toast.success("Image uploaded");
+  };
+
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
