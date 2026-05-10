@@ -21,6 +21,12 @@ import {
   CheckCircle2,
   Clock,
   AlertCircle,
+  ShieldCheck,
+  Download,
+  ZoomIn,
+  ZoomOut,
+  X,
+  Lock,
 } from "lucide-react";
 import { submitRating } from "@/server/ratings.functions";
 
