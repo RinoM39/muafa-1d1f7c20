@@ -98,21 +98,24 @@ function FacilityBookings() {
         <TabsContent value="completed" className="mt-4 space-y-3">
           {completed.length === 0 && <p className="text-sm text-muted-foreground">No completed bookings yet.</p>}
           {completed.map((r) => (
-            <Card key={r.id} className="flex items-center justify-between p-4">
-              <div>
-                <h3 className="font-semibold">{r.user?.full_name ?? "Patient"}</h3>
-                <p className="text-sm text-muted-foreground">{new Date(r.slot_start).toLocaleString()}</p>
+            <Card key={r.id} className="space-y-3 p-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <h3 className="font-semibold">{r.user?.full_name ?? "Patient"}</h3>
+                  <p className="text-sm text-muted-foreground">{new Date(r.slot_start).toLocaleString()}</p>
+                </div>
+                <RateUserButton
+                  onSubmit={async (stars, comment) => {
+                    try {
+                      await rateFn({ data: { bookingId: r.id, stars, comment, direction: "facility_to_user" } });
+                      toast.success("Rating submitted");
+                    } catch (e) {
+                      toast.error(e instanceof Error ? e.message : "Failed");
+                    }
+                  }}
+                />
               </div>
-              <RateUserButton
-                onSubmit={async (stars, comment) => {
-                  try {
-                    await rateFn({ data: { bookingId: r.id, stars, comment, direction: "facility_to_user" } });
-                    toast.success("Rating submitted");
-                  } catch (e) {
-                    toast.error(e instanceof Error ? e.message : "Failed");
-                  }
-                }}
-              />
+              <ReportUploader bookingId={r.id} onSaved={load} />
             </Card>
           ))}
         </TabsContent>
