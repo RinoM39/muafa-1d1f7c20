@@ -294,26 +294,12 @@ function BookingDetailsDialog({
                 <code className="rounded bg-muted px-2 py-0.5 text-xs">{booking.id.slice(0, 8).toUpperCase()}</code>
               </DetailRow>
 
-              {isPast && (
-                <div className="border-t pt-4">
-                  <h4 className="mb-2 flex items-center gap-2 text-sm font-semibold">
-                    <FileText className="h-4 w-4 text-primary" /> Medical Report
-                  </h4>
-                  {booking.report_url ? (
-                    <a href={booking.report_url} target="_blank" rel="noreferrer">
-                      <Button size="sm" variant="secondary" className="gap-1">
-                        <FileText className="h-3.5 w-3.5" /> View Report
-                      </Button>
-                    </a>
-                  ) : (
-                    <p className="text-sm text-muted-foreground">No report uploaded yet.</p>
-                  )}
-                  {canRate && (
-                    <Button onClick={onRate} className="mt-3 w-full gap-1">
-                      <Star className="h-4 w-4" /> Rate Experience
-                    </Button>
-                  )}
-                </div>
+              {isPast && <MedicalReportSection bookingId={booking.id} />}
+
+              {isPast && canRate && (
+                <Button onClick={onRate} className="w-full gap-1">
+                  <Star className="h-4 w-4" /> Rate Experience
+                </Button>
               )}
             </div>
           </>
