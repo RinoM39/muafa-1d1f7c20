@@ -134,6 +134,42 @@ export type Database = {
         }
         Relationships: []
       }
+      medical_reports: {
+        Row: {
+          booking_id: string
+          created_at: string
+          doctor_note: string | null
+          facility_id: string
+          file_path: string
+          file_url: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          booking_id: string
+          created_at?: string
+          doctor_note?: string | null
+          facility_id: string
+          file_path: string
+          file_url: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          booking_id?: string
+          created_at?: string
+          doctor_note?: string | null
+          facility_id?: string
+          file_path?: string
+          file_url?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           body: string
@@ -386,6 +422,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_access_booking_report: {
+        Args: { _booking_id: string; _user_id: string }
+        Returns: boolean
+      }
       get_primary_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
@@ -395,6 +435,10 @@ export type Database = {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      is_facility_owner_for_booking: {
+        Args: { _booking_id: string; _user_id: string }
         Returns: boolean
       }
     }
