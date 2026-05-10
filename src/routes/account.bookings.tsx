@@ -359,3 +359,185 @@ function RateDialog({
     </Dialog>
   );
 }
+
+interface ReportData {
+  file_path: string;
+  doctor_note: string | null;
+  created_at: string;
+}
+
+function MedicalReportSection({ bookingId }: { bookingId: string }) {
+  const [report, setReport] = useState<ReportData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [open, setOpen] = useState(false);
+  const [signedUrl, setSignedUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      const { data } = await supabase
+        .from("medical_reports")
+        .select("file_path,doctor_note,created_at")
+        .eq("booking_id", bookingId)
+        .maybeSingle();
+      if (!cancelled) {
+        setReport(data ?? null);
+        setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [bookingId]);
+
+  const openViewer = async () => {
+    if (!report) return;
+    const { data, error } = await supabase.storage
+      .from("medical-reports")
+      .createSignedUrl(report.file_path, 60 * 10);
+    if (error || !data) {
+      toast.error("Failed to open report");
+      return;
+    }
+    setSignedUrl(data.signedUrl);
+    setOpen(true);
+  };
+
+  if (loading) {
+    return <div className="h-16 animate-pulse rounded-lg bg-muted" />;
+  }
+
+  if (!report) {
+    return (
+      <div className="flex items-center gap-2 rounded-lg border border-dashed bg-muted/30 p-3 text-sm text-muted-foreground">
+        <Clock className="h-4 w-4" />
+        Report Pending — your facility will upload it after the session.
+      </div>
+    );
+  }
+
+  const isPdf = report.file_path.toLowerCase().endsWith(".pdf");
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={openViewer}
+        className="group w-full overflow-hidden rounded-xl border bg-card text-left shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
+        style={{ borderColor: "rgba(90,151,137,0.25)" }}
+      >
+        <div className="flex items-center gap-3 p-4">
+          <div
+            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full"
+            style={{ backgroundColor: "rgba(90,151,137,0.12)", color: "#5A9789" }}
+          >
+            <FileText className="h-5 w-5" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-1.5 font-semibold" style={{ color: "#5A9789" }}>
+              View Medical Report
+              <Lock className="h-3 w-3 opacity-70" />
+            </div>
+            <div className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
+              <ShieldCheck className="h-3 w-3" />
+              Private & Encrypted · {new Date(report.created_at).toLocaleDateString()}
+            </div>
+          </div>
+        </div>
+        {report.doctor_note && (
+          <div className="border-t bg-muted/30 px-4 py-2 text-xs text-muted-foreground">
+            <span className="font-medium text-foreground">Doctor's note: </span>
+            {report.doctor_note}
+          </div>
+        )}
+      </button>
+
+      <ReportLightbox
+        open={open}
+        onClose={() => setOpen(false)}
+        url={signedUrl}
+        isPdf={isPdf}
+        filename={report.file_path.split("/").pop() ?? "report"}
+      />
+    </>
+  );
+}
+
+function ReportLightbox({
+  open,
+  onClose,
+  url,
+  isPdf,
+  filename,
+}: {
+  open: boolean;
+  onClose: () => void;
+  url: string | null;
+  isPdf: boolean;
+  filename: string;
+}) {
+  const [zoom, setZoom] = useState(1);
+
+  useEffect(() => {
+    if (!open) setZoom(1);
+  }, [open]);
+
+  if (!open || !url) return null;
+
+  const download = async () => {
+    try {
+      const res = await fetch(url);
+      const blob = await res.blob();
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = filename;
+      link.click();
+      URL.revokeObjectURL(link.href);
+    } catch {
+      toast.error("Download failed");
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-[100] flex flex-col bg-background/95 backdrop-blur-md animate-in fade-in-0">
+      <div className="flex items-center justify-between border-b px-4 py-3">
+        <div className="flex items-center gap-2 text-sm font-medium">
+          <ShieldCheck className="h-4 w-4" style={{ color: "#5A9789" }} />
+          Medical Report
+        </div>
+        <div className="flex items-center gap-1">
+          {!isPdf && (
+            <>
+              <Button size="icon" variant="ghost" onClick={() => setZoom((z) => Math.max(0.5, z - 0.25))}>
+                <ZoomOut className="h-4 w-4" />
+              </Button>
+              <span className="w-12 text-center text-xs tabular-nums">{Math.round(zoom * 100)}%</span>
+              <Button size="icon" variant="ghost" onClick={() => setZoom((z) => Math.min(4, z + 0.25))}>
+                <ZoomIn className="h-4 w-4" />
+              </Button>
+            </>
+          )}
+          <Button size="sm" variant="outline" onClick={download} className="gap-1">
+            <Download className="h-4 w-4" /> Download
+          </Button>
+          <Button size="icon" variant="ghost" onClick={onClose}>
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+      <div className="flex-1 overflow-auto bg-muted/40 p-4">
+        {isPdf ? (
+          <iframe src={url} title="Medical report" className="h-full w-full rounded-md border bg-white" />
+        ) : (
+          <div className="flex min-h-full items-center justify-center">
+            <img
+              src={url}
+              alt="Medical report"
+              style={{ transform: `scale(${zoom})`, transformOrigin: "center", transition: "transform 0.2s" }}
+              className="max-h-full max-w-full rounded-md shadow-xl"
+            />
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
