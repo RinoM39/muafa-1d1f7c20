@@ -7,15 +7,35 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Star } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Star,
+  CalendarClock,
+  MapPin,
+  Phone,
+  Hash,
+  FileText,
+  Building2,
+  CheckCircle2,
+  Clock,
+  AlertCircle,
+} from "lucide-react";
 import { submitRating } from "@/server/ratings.functions";
 
 export const Route = createFileRoute("/account/bookings")({
   beforeLoad: () => requireAuth("/account/bookings"),
   component: BookingsPage,
 });
+
+interface FacilityInfo {
+  id: string;
+  name: string;
+  image_url: string | null;
+  phone: string | null;
+  location_url: string | null;
+}
 
 interface BookingRow {
   id: string;
@@ -24,12 +44,14 @@ interface BookingRow {
   status: string;
   price: number;
   report_url: string | null;
-  facility: { id: string; name: string; image_url: string | null } | null;
+  facility: FacilityInfo | null;
 }
 
 function BookingsPage() {
   const [bookings, setBookings] = useState<BookingRow[] | null>(null);
   const [rated, setRated] = useState<Set<string>>(new Set());
+  const [selected, setSelected] = useState<BookingRow | null>(null);
+  const [rateOpen, setRateOpen] = useState(false);
   const rateFn = useServerFn(submitRating);
 
   const load = async () => {
@@ -47,13 +69,13 @@ function BookingsPage() {
       return;
     }
     const facilityIds = Array.from(new Set((rows ?? []).map((b) => b.facility_id)));
-    let facilityMap: Record<string, { id: string; name: string; image_url: string | null }> = {};
+    let facilityMap: Record<string, FacilityInfo> = {};
     if (facilityIds.length > 0) {
       const { data: fs } = await supabase
         .from("facilities")
-        .select("id,name,image_url")
+        .select("id,name,image_url,phone,location_url")
         .in("id", facilityIds);
-      facilityMap = Object.fromEntries((fs ?? []).map((f) => [f.id, f]));
+      facilityMap = Object.fromEntries((fs ?? []).map((f) => [f.id, f as FacilityInfo]));
     }
     setBookings(
       (rows ?? []).map((b) => ({
@@ -101,6 +123,9 @@ function BookingsPage() {
   const upcoming = (bookings ?? []).filter((b) => new Date(b.slot_start).getTime() > now && b.status === "upcoming");
   const past = (bookings ?? []).filter((b) => !(new Date(b.slot_start).getTime() > now && b.status === "upcoming"));
 
+  const isPast = selected ? !(new Date(selected.slot_start).getTime() > now && selected.status === "upcoming") : false;
+  const canRate = selected ? selected.status === "completed" && !rated.has(selected.id) : false;
+
   return (
     <div className="container mx-auto max-w-3xl px-4 py-10">
       <h1 className="text-3xl font-bold">My Bookings</h1>
@@ -111,80 +136,234 @@ function BookingsPage() {
         </TabsList>
         <TabsContent value="upcoming" className="mt-4 space-y-3">
           {upcoming.length === 0 && <p className="text-sm text-muted-foreground">No upcoming bookings.</p>}
-          {upcoming.map((b) => <BookingCard key={b.id} b={b} />)}
+          {upcoming.map((b) => <BookingCard key={b.id} b={b} onOpen={() => setSelected(b)} />)}
         </TabsContent>
         <TabsContent value="past" className="mt-4 space-y-3">
           {past.length === 0 && <p className="text-sm text-muted-foreground">No past bookings yet.</p>}
-          {past.map((b) => (
-            <BookingCard
-              key={b.id}
-              b={b}
-              showRate={b.status === "completed" && !rated.has(b.id)}
-              onRate={async (stars, comment) => {
-                try {
-                  await rateFn({ data: { bookingId: b.id, stars, comment, direction: "user_to_facility" } });
-                  toast.success("Thanks for rating!");
-                  load();
-                } catch (e) {
-                  toast.error(e instanceof Error ? e.message : "Failed");
-                }
-              }}
-            />
-          ))}
+          {past.map((b) => <BookingCard key={b.id} b={b} onOpen={() => setSelected(b)} />)}
         </TabsContent>
       </Tabs>
+
+      <BookingDetailsDialog
+        booking={selected}
+        isPast={isPast}
+        canRate={canRate}
+        onClose={() => setSelected(null)}
+        onRate={() => setRateOpen(true)}
+      />
+
+      <RateDialog
+        open={rateOpen}
+        onOpenChange={setRateOpen}
+        onSubmit={async (stars, comment) => {
+          if (!selected) return;
+          try {
+            await rateFn({ data: { bookingId: selected.id, stars, comment, direction: "user_to_facility" } });
+            toast.success("Thanks for rating!");
+            setRateOpen(false);
+            load();
+          } catch (e) {
+            toast.error(e instanceof Error ? e.message : "Failed");
+          }
+        }}
+      />
     </div>
   );
 }
 
-function BookingCard({
-  b, showRate, onRate,
-}: {
-  b: BookingRow;
-  showRate?: boolean;
-  onRate?: (stars: number, comment: string) => Promise<void>;
-}) {
-  const [open, setOpen] = useState(false);
-  const [stars, setStars] = useState(5);
-  const [comment, setComment] = useState("");
-
+function statusBadge(status: string) {
+  const map: Record<string, { label: string; cls: string; Icon: typeof CheckCircle2 }> = {
+    upcoming: { label: "Confirmed", cls: "bg-primary/10 text-primary border-primary/20", Icon: CheckCircle2 },
+    pending: { label: "Pending", cls: "bg-warning/10 text-warning border-warning/20", Icon: Clock },
+    completed: { label: "Completed", cls: "bg-success/10 text-success border-success/20", Icon: CheckCircle2 },
+    cancelled: { label: "Cancelled", cls: "bg-destructive/10 text-destructive border-destructive/20", Icon: AlertCircle },
+  };
+  const m = map[status] ?? { label: status, cls: "bg-muted text-foreground border-border", Icon: AlertCircle };
+  const Icon = m.Icon;
   return (
-    <Card className="flex flex-wrap items-center gap-4 p-4">
+    <Badge variant="outline" className={`gap-1 ${m.cls}`}>
+      <Icon className="h-3 w-3" />
+      {m.label}
+    </Badge>
+  );
+}
+
+function BookingCard({ b, onOpen }: { b: BookingRow; onOpen: () => void }) {
+  return (
+    <Card
+      onClick={onOpen}
+      className="flex cursor-pointer flex-wrap items-center gap-4 p-4 transition-all hover:shadow-md hover:-translate-y-0.5"
+    >
       <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-muted">
         {b.facility?.image_url && <img src={b.facility.image_url} alt="" className="h-full w-full object-cover" />}
       </div>
       <div className="flex-1 min-w-0">
         <h3 className="truncate font-semibold">{b.facility?.name ?? "—"}</h3>
         <p className="text-sm text-muted-foreground">{new Date(b.slot_start).toLocaleString()}</p>
-        <p className="mt-1 text-xs uppercase tracking-wide text-primary">{b.status}</p>
+        <div className="mt-1">{statusBadge(b.status)}</div>
       </div>
-      <div className="flex flex-col items-end gap-2">
-        <div className="font-semibold">{Number(b.price).toFixed(2)}</div>
-        {b.report_url && (
-          <a href={b.report_url} target="_blank" rel="noreferrer" className="text-xs text-primary hover:underline">
-            View report
-          </a>
-        )}
-        {showRate && onRate && (
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-              <Button size="sm" variant="outline">Rate</Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader><DialogTitle>Rate your visit</DialogTitle></DialogHeader>
-              <div className="flex gap-1">
-                {[1,2,3,4,5].map((n) => (
-                  <button key={n} type="button" onClick={() => setStars(n)}>
-                    <Star className={`h-7 w-7 ${n <= stars ? "fill-warning text-warning" : "text-muted-foreground"}`} />
-                  </button>
-                ))}
-              </div>
-              <Input value={comment} onChange={(e) => setComment(e.target.value)} placeholder="Optional comment" />
-              <Button onClick={async () => { await onRate(stars, comment); setOpen(false); }}>Submit</Button>
-            </DialogContent>
-          </Dialog>
-        )}
-      </div>
+      <div className="font-semibold">{Number(b.price).toFixed(2)}</div>
     </Card>
+  );
+}
+
+function BookingDetailsDialog({
+  booking,
+  isPast,
+  canRate,
+  onClose,
+  onRate,
+}: {
+  booking: BookingRow | null;
+  isPast: boolean;
+  canRate: boolean;
+  onClose: () => void;
+  onRate: () => void;
+}) {
+  const open = !!booking;
+  const f = booking?.facility;
+  const start = booking ? new Date(booking.slot_start) : null;
+  const end = booking ? new Date(booking.slot_end) : null;
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-lg overflow-hidden p-0 backdrop-blur-xl data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95">
+        {booking && (
+          <>
+            <div className="relative h-36 w-full bg-gradient-to-br from-primary to-primary/70">
+              {f?.image_url && (
+                <img src={f.image_url} alt="" className="h-full w-full object-cover opacity-60" />
+              )}
+              <div className="absolute inset-0 bg-gradient-to-t from-background/90 to-transparent" />
+              <div className="absolute bottom-3 left-4 right-4 flex items-end justify-between gap-2">
+                <div className="min-w-0">
+                  <DialogHeader>
+                    <DialogTitle className="truncate text-2xl font-bold">{f?.name ?? "—"}</DialogTitle>
+                  </DialogHeader>
+                </div>
+                {statusBadge(booking.status)}
+              </div>
+            </div>
+
+            <div className="space-y-4 p-6">
+              <DetailRow Icon={CalendarClock} label="Appointment">
+                <div className="font-medium">
+                  {start?.toLocaleDateString(undefined, { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  {start?.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} —{" "}
+                  {end?.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                </div>
+              </DetailRow>
+
+              <DetailRow Icon={MapPin} label="Location">
+                {f?.location_url ? (
+                  <a href={f.location_url} target="_blank" rel="noreferrer">
+                    <Button size="sm" variant="outline" className="mt-1 gap-1">
+                      <MapPin className="h-3.5 w-3.5" /> View on Maps
+                    </Button>
+                  </a>
+                ) : (
+                  <span className="text-sm text-muted-foreground">Not provided</span>
+                )}
+              </DetailRow>
+
+              <DetailRow Icon={Phone} label="Contact">
+                {f?.phone ? (
+                  <a href={`tel:${f.phone}`}>
+                    <Button size="sm" variant="outline" className="mt-1 gap-1">
+                      <Phone className="h-3.5 w-3.5" /> Call {f.phone}
+                    </Button>
+                  </a>
+                ) : (
+                  <span className="text-sm text-muted-foreground">Not provided</span>
+                )}
+              </DetailRow>
+
+              <DetailRow Icon={Building2} label="Price">
+                <span className="font-semibold">{Number(booking.price).toFixed(2)}</span>
+              </DetailRow>
+
+              <DetailRow Icon={Hash} label="Reference ID">
+                <code className="rounded bg-muted px-2 py-0.5 text-xs">{booking.id.slice(0, 8).toUpperCase()}</code>
+              </DetailRow>
+
+              {isPast && (
+                <div className="border-t pt-4">
+                  <h4 className="mb-2 flex items-center gap-2 text-sm font-semibold">
+                    <FileText className="h-4 w-4 text-primary" /> Medical Report
+                  </h4>
+                  {booking.report_url ? (
+                    <a href={booking.report_url} target="_blank" rel="noreferrer">
+                      <Button size="sm" variant="secondary" className="gap-1">
+                        <FileText className="h-3.5 w-3.5" /> View Report
+                      </Button>
+                    </a>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">No report uploaded yet.</p>
+                  )}
+                  {canRate && (
+                    <Button onClick={onRate} className="mt-3 w-full gap-1">
+                      <Star className="h-4 w-4" /> Rate Experience
+                    </Button>
+                  )}
+                </div>
+              )}
+            </div>
+          </>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function DetailRow({
+  Icon,
+  label,
+  children,
+}: {
+  Icon: typeof CalendarClock;
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex gap-3">
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+        <Icon className="h-4 w-4" />
+      </div>
+      <div className="min-w-0 flex-1">
+        <div className="text-xs uppercase tracking-wide text-muted-foreground">{label}</div>
+        <div className="mt-0.5">{children}</div>
+      </div>
+    </div>
+  );
+}
+
+function RateDialog({
+  open,
+  onOpenChange,
+  onSubmit,
+}: {
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+  onSubmit: (stars: number, comment: string) => Promise<void>;
+}) {
+  const [stars, setStars] = useState(5);
+  const [comment, setComment] = useState("");
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader><DialogTitle>Rate your visit</DialogTitle></DialogHeader>
+        <div className="flex justify-center gap-1">
+          {[1, 2, 3, 4, 5].map((n) => (
+            <button key={n} type="button" onClick={() => setStars(n)}>
+              <Star className={`h-8 w-8 ${n <= stars ? "fill-warning text-warning" : "text-muted-foreground"}`} />
+            </button>
+          ))}
+        </div>
+        <Input value={comment} onChange={(e) => setComment(e.target.value)} placeholder="Optional comment" />
+        <Button onClick={() => onSubmit(stars, comment)}>Submit</Button>
+      </DialogContent>
+    </Dialog>
   );
 }
