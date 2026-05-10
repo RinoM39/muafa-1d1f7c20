@@ -16,7 +16,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Star } from "lucide-react";
+import { Star, Upload, FileText, CheckCircle2, ShieldCheck, Loader2 } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
 import { endSession } from "@/server/sessions.functions";
 import { submitRating } from "@/server/ratings.functions";
 
@@ -97,21 +98,24 @@ function FacilityBookings() {
         <TabsContent value="completed" className="mt-4 space-y-3">
           {completed.length === 0 && <p className="text-sm text-muted-foreground">No completed bookings yet.</p>}
           {completed.map((r) => (
-            <Card key={r.id} className="flex items-center justify-between p-4">
-              <div>
-                <h3 className="font-semibold">{r.user?.full_name ?? "Patient"}</h3>
-                <p className="text-sm text-muted-foreground">{new Date(r.slot_start).toLocaleString()}</p>
+            <Card key={r.id} className="space-y-3 p-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <h3 className="font-semibold">{r.user?.full_name ?? "Patient"}</h3>
+                  <p className="text-sm text-muted-foreground">{new Date(r.slot_start).toLocaleString()}</p>
+                </div>
+                <RateUserButton
+                  onSubmit={async (stars, comment) => {
+                    try {
+                      await rateFn({ data: { bookingId: r.id, stars, comment, direction: "facility_to_user" } });
+                      toast.success("Rating submitted");
+                    } catch (e) {
+                      toast.error(e instanceof Error ? e.message : "Failed");
+                    }
+                  }}
+                />
               </div>
-              <RateUserButton
-                onSubmit={async (stars, comment) => {
-                  try {
-                    await rateFn({ data: { bookingId: r.id, stars, comment, direction: "facility_to_user" } });
-                    toast.success("Rating submitted");
-                  } catch (e) {
-                    toast.error(e instanceof Error ? e.message : "Failed");
-                  }
-                }}
-              />
+              <ReportUploader bookingId={r.id} onSaved={load} />
             </Card>
           ))}
         </TabsContent>
@@ -191,6 +195,160 @@ export function StarPicker({ value, onChange }: { value: number; onChange: (n: n
           <Star className={`h-7 w-7 ${n <= value ? "fill-warning text-warning" : "text-muted-foreground"}`} />
         </button>
       ))}
+    </div>
+  );
+}
+
+function ReportUploader({ bookingId, onSaved }: { bookingId: string; onSaved: () => void }) {
+  const [existing, setExisting] = useState<{ file_url: string; file_path: string; doctor_note: string | null } | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
+  const [note, setNote] = useState("");
+  const [justSaved, setJustSaved] = useState(false);
+
+  const load = async () => {
+    setLoading(true);
+    const { data } = await supabase
+      .from("medical_reports")
+      .select("file_url,file_path,doctor_note")
+      .eq("booking_id", bookingId)
+      .maybeSingle();
+    setExisting(data ?? null);
+    setNote(data?.doctor_note ?? "");
+    setLoading(false);
+  };
+
+  useEffect(() => { load(); }, [bookingId]);
+
+  const handleFile = async (file: File) => {
+    if (!file) return;
+    const allowed = ["image/jpeg", "image/png", "application/pdf"];
+    if (!allowed.includes(file.type)) {
+      toast.error("Only JPG, PNG or PDF files are allowed");
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("File must be under 10MB");
+      return;
+    }
+    setUploading(true);
+    try {
+      const { data: u } = await supabase.auth.getUser();
+      if (!u.user) throw new Error("Not authenticated");
+      const ext = file.name.split(".").pop() || "bin";
+      const path = `${bookingId}/${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from("medical-reports")
+        .upload(path, file, { contentType: file.type, upsert: true });
+      if (upErr) throw upErr;
+
+      const { data: booking } = await supabase
+        .from("bookings").select("user_id,facility_id").eq("id", bookingId).maybeSingle();
+      if (!booking) throw new Error("Booking not found");
+
+      const payload = {
+        booking_id: bookingId,
+        user_id: booking.user_id,
+        facility_id: booking.facility_id,
+        file_path: path,
+        file_url: path,
+        doctor_note: note || null,
+      };
+      const { error: dbErr } = await supabase
+        .from("medical_reports")
+        .upsert(payload, { onConflict: "booking_id" });
+      if (dbErr) throw dbErr;
+
+      toast.success("Report uploaded successfully");
+      setJustSaved(true);
+      setTimeout(() => setJustSaved(false), 3000);
+      await load();
+      onSaved();
+    } catch (e) {
+      console.error("[report upload]", e);
+      toast.error(e instanceof Error ? e.message : "Upload failed");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const saveNote = async () => {
+    if (!existing) return;
+    const { error } = await supabase
+      .from("medical_reports")
+      .update({ doctor_note: note || null })
+      .eq("booking_id", bookingId);
+    if (error) toast.error(error.message);
+    else toast.success("Note updated");
+  };
+
+  if (loading) return <div className="h-12 animate-pulse rounded-md bg-muted" />;
+
+  return (
+    <div className="rounded-lg border bg-muted/30 p-3">
+      <div className="mb-2 flex items-center gap-2 text-sm font-medium">
+        <ShieldCheck className="h-4 w-4 text-primary" />
+        Medical Report
+        {existing && (
+          <span className="ml-auto inline-flex items-center gap-1 text-xs text-success">
+            <CheckCircle2 className="h-3.5 w-3.5" /> Uploaded
+          </span>
+        )}
+      </div>
+
+      {existing ? (
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 text-sm">
+            <FileText className="h-4 w-4 text-primary" />
+            <span className="truncate text-muted-foreground">{existing.file_path.split("/").pop()}</span>
+          </div>
+          <Textarea
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            placeholder="Doctor's note (optional)"
+            rows={2}
+          />
+          <div className="flex flex-wrap gap-2">
+            <Button size="sm" variant="outline" onClick={saveNote}>Save note</Button>
+            <label>
+              <input
+                type="file"
+                accept="image/jpeg,image/png,application/pdf"
+                className="hidden"
+                onChange={(e) => e.target.files && handleFile(e.target.files[0])}
+              />
+              <Button size="sm" variant="ghost" asChild disabled={uploading}>
+                <span>{uploading ? "Uploading..." : "Replace file"}</span>
+              </Button>
+            </label>
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          <Textarea
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            placeholder="Doctor's note (optional)"
+            rows={2}
+          />
+          <label className="flex cursor-pointer items-center justify-center gap-2 rounded-md border-2 border-dashed border-border px-4 py-6 text-sm text-muted-foreground transition hover:border-primary hover:bg-primary/5">
+            {uploading ? (
+              <><Loader2 className="h-4 w-4 animate-spin" /> Uploading...</>
+            ) : justSaved ? (
+              <><CheckCircle2 className="h-4 w-4 text-success" /> Saved</>
+            ) : (
+              <><Upload className="h-4 w-4" /> Upload Report (JPG, PNG, PDF)</>
+            )}
+            <input
+              type="file"
+              accept="image/jpeg,image/png,application/pdf"
+              className="hidden"
+              disabled={uploading}
+              onChange={(e) => e.target.files && handleFile(e.target.files[0])}
+            />
+          </label>
+        </div>
+      )}
     </div>
   );
 }
