@@ -124,10 +124,15 @@ function FacilityBookings() {
   );
 }
 
-function BookingCard({ r, onEnd }: { r: Row; onEnd: (reportUrl: string) => void }) {
+function BookingCard({ r, onEnd }: { r: Row; onEnd: (reportUrl: string) => Promise<void> | void }) {
   const [open, setOpen] = useState(false);
   const [reportUrl, setReportUrl] = useState("");
   const [busy, setBusy] = useState(false);
+  const [rateOpen, setRateOpen] = useState(false);
+  const [stars, setStars] = useState(5);
+  const [comment, setComment] = useState("");
+  const rateFn = useServerFn(submitRating);
+
   return (
     <Card className="flex flex-wrap items-center justify-between gap-4 p-4">
       <div>
@@ -154,13 +159,44 @@ function BookingCard({ r, onEnd }: { r: Row; onEnd: (reportUrl: string) => void 
               disabled={busy}
               onClick={async () => {
                 setBusy(true);
-                await onEnd(reportUrl);
-                setBusy(false);
-                setOpen(false);
+                try {
+                  await onEnd(reportUrl);
+                  setOpen(false);
+                  setRateOpen(true);
+                } finally {
+                  setBusy(false);
+                }
               }}
             >
               {busy ? "Saving..." : "Confirm completion"}
             </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={rateOpen} onOpenChange={setRateOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Rate patient</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <StarPicker value={stars} onChange={setStars} />
+            <Input value={comment} onChange={(e) => setComment(e.target.value)} placeholder="Optional comment" />
+            <div className="flex gap-2">
+              <Button
+                className="flex-1"
+                onClick={async () => {
+                  try {
+                    await rateFn({ data: { bookingId: r.id, stars, comment, direction: "facility_to_user" } });
+                    toast.success("Rating submitted");
+                    setRateOpen(false);
+                  } catch (e) {
+                    toast.error(e instanceof Error ? e.message : "Failed");
+                  }
+                }}
+              >
+                Submit rating
+              </Button>
+              <Button variant="ghost" onClick={() => setRateOpen(false)}>Skip</Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
