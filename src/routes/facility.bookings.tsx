@@ -77,8 +77,8 @@ function FacilityBookings() {
       <h1 className="text-3xl font-bold">Facility Bookings</h1>
       <Tabs defaultValue="upcoming" className="mt-6">
         <TabsList>
-          <TabsTrigger value="upcoming">Upcoming ({upcoming.length})</TabsTrigger>
-          <TabsTrigger value="completed">Completed ({completed.length})</TabsTrigger>
+          <TabsTrigger value="upcoming">Upcoming Bookings ({upcoming.length})</TabsTrigger>
+          <TabsTrigger value="completed">Completed Bookings ({completed.length})</TabsTrigger>
         </TabsList>
         <TabsContent value="upcoming" className="mt-4 space-y-3">
           {upcoming.length === 0 && <p className="text-sm text-muted-foreground">No upcoming bookings.</p>}
