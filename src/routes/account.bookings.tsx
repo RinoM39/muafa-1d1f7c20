@@ -126,6 +126,19 @@ function BookingsPage() {
     };
   }, []);
 
+  // Auto-open rating dialog when a completed, unrated booking is found
+  useEffect(() => {
+    if (!bookings || rateOpen || selected) return;
+    const pending = bookings.find(
+      (b) => b.status === "completed" && !rated.has(b.id) && !autoPrompted.has(b.id),
+    );
+    if (pending) {
+      setAutoPrompted((s) => new Set(s).add(pending.id));
+      setSelected(pending);
+      setRateOpen(true);
+    }
+  }, [bookings, rated, autoPrompted, rateOpen, selected]);
+
   const now = Date.now();
   const upcoming = (bookings ?? []).filter((b) => new Date(b.slot_start).getTime() > now && b.status === "upcoming");
   const past = (bookings ?? []).filter((b) => !(new Date(b.slot_start).getTime() > now && b.status === "upcoming"));
