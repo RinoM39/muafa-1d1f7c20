@@ -58,6 +58,7 @@ function BookingsPage() {
   const [rated, setRated] = useState<Set<string>>(new Set());
   const [selected, setSelected] = useState<BookingRow | null>(null);
   const [rateOpen, setRateOpen] = useState(false);
+  const [autoPrompted, setAutoPrompted] = useState<Set<string>>(new Set());
   const rateFn = useServerFn(submitRating);
 
   const load = async () => {
@@ -124,6 +125,19 @@ function BookingsPage() {
       if (channel) supabase.removeChannel(channel);
     };
   }, []);
+
+  // Auto-open rating dialog when a completed, unrated booking is found
+  useEffect(() => {
+    if (!bookings || rateOpen || selected) return;
+    const pending = bookings.find(
+      (b) => b.status === "completed" && !rated.has(b.id) && !autoPrompted.has(b.id),
+    );
+    if (pending) {
+      setAutoPrompted((s) => new Set(s).add(pending.id));
+      setSelected(pending);
+      setRateOpen(true);
+    }
+  }, [bookings, rated, autoPrompted, rateOpen, selected]);
 
   const now = Date.now();
   const upcoming = (bookings ?? []).filter((b) => new Date(b.slot_start).getTime() > now && b.status === "upcoming");
