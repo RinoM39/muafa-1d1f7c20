@@ -58,6 +58,7 @@ function BookingsPage() {
   const [rated, setRated] = useState<Set<string>>(new Set());
   const [selected, setSelected] = useState<BookingRow | null>(null);
   const [rateOpen, setRateOpen] = useState(false);
+  const [autoPrompted, setAutoPrompted] = useState<Set<string>>(new Set());
   const rateFn = useServerFn(submitRating);
 
   const load = async () => {
