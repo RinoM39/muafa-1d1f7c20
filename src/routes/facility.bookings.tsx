@@ -51,8 +51,7 @@ function FacilityBookings() {
     const { data } = await supabase
       .from("bookings")
       .select("id,user_id,slot_start,status,price,report_url,facility:facilities(id,name)")
-      .in("facility_id", ids)
-      .order("slot_start", { ascending: false });
+      .in("facility_id", ids);
     const list = (data as unknown as Row[]) ?? [];
     const userIds = Array.from(new Set(list.map((r) => r.user_id)));
     if (userIds.length > 0) {
@@ -66,16 +65,20 @@ function FacilityBookings() {
 
   useEffect(() => { load(); }, []);
 
-  const upcoming = (rows ?? []).filter((r) => r.status === "upcoming");
-  const completed = (rows ?? []).filter((r) => r.status === "completed");
+  const upcoming = (rows ?? [])
+    .filter((r) => r.status === "upcoming")
+    .sort((a, b) => new Date(a.slot_start).getTime() - new Date(b.slot_start).getTime());
+  const completed = (rows ?? [])
+    .filter((r) => r.status === "completed")
+    .sort((a, b) => new Date(b.slot_start).getTime() - new Date(a.slot_start).getTime());
 
   return (
     <div className="container mx-auto max-w-4xl px-4 py-10">
       <h1 className="text-3xl font-bold">Facility Bookings</h1>
       <Tabs defaultValue="upcoming" className="mt-6">
         <TabsList>
-          <TabsTrigger value="upcoming">Upcoming ({upcoming.length})</TabsTrigger>
-          <TabsTrigger value="completed">Completed ({completed.length})</TabsTrigger>
+          <TabsTrigger value="upcoming">Upcoming Bookings ({upcoming.length})</TabsTrigger>
+          <TabsTrigger value="completed">Completed Bookings ({completed.length})</TabsTrigger>
         </TabsList>
         <TabsContent value="upcoming" className="mt-4 space-y-3">
           {upcoming.length === 0 && <p className="text-sm text-muted-foreground">No upcoming bookings.</p>}
@@ -124,7 +127,19 @@ function FacilityBookings() {
   );
 }
 
+function timeUntil(iso: string): string {
+  const diff = new Date(iso).getTime() - Date.now();
+  if (diff <= 0) return "now";
+  const mins = Math.round(diff / 60000);
+  if (mins < 60) return `in ${mins}m`;
+  const hours = Math.round(mins / 60);
+  if (hours < 24) return `in ${hours}h`;
+  const days = Math.round(hours / 24);
+  return `in ${days}d`;
+}
+
 function BookingCard({ r, onEnd }: { r: Row; onEnd: (reportUrl: string) => Promise<void> | void }) {
+
   const [open, setOpen] = useState(false);
   const [reportUrl, setReportUrl] = useState("");
   const [busy, setBusy] = useState(false);
@@ -134,19 +149,24 @@ function BookingCard({ r, onEnd }: { r: Row; onEnd: (reportUrl: string) => Promi
   const rateFn = useServerFn(submitRating);
 
   return (
-    <Card className="flex flex-wrap items-center justify-between gap-4 p-4">
-      <div>
-        <h3 className="font-semibold">{r.user?.full_name ?? "Patient"}</h3>
-        <p className="text-sm text-muted-foreground">{new Date(r.slot_start).toLocaleString()}</p>
+    <Card className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="min-w-0">
+        <h3 className="truncate font-semibold">{r.user?.full_name ?? "Patient"}</h3>
+        <p className="text-sm text-muted-foreground">
+          {new Date(r.slot_start).toLocaleString()}
+          <span className="ms-2 inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+            {timeUntil(r.slot_start)}
+          </span>
+        </p>
         {r.user?.phone && <p className="text-xs text-muted-foreground">{r.user.phone}</p>}
       </div>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>
-          <Button size="sm">End session</Button>
+          <Button size="sm" className="w-full sm:w-auto">Complete Booking / إنهاء الحجز</Button>
         </DialogTrigger>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>End session</DialogTitle>
+            <DialogTitle>Complete Booking / إنهاء الحجز</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
@@ -168,11 +188,12 @@ function BookingCard({ r, onEnd }: { r: Row; onEnd: (reportUrl: string) => Promi
                 }
               }}
             >
-              {busy ? "Saving..." : "Confirm completion"}
+              {busy ? "Saving..." : "Confirm / تأكيد"}
             </Button>
           </div>
         </DialogContent>
       </Dialog>
+
 
       <Dialog open={rateOpen} onOpenChange={setRateOpen}>
         <DialogContent>
