@@ -65,8 +65,12 @@ function FacilityBookings() {
 
   useEffect(() => { load(); }, []);
 
-  const upcoming = (rows ?? []).filter((r) => r.status === "upcoming");
-  const completed = (rows ?? []).filter((r) => r.status === "completed");
+  const upcoming = (rows ?? [])
+    .filter((r) => r.status === "upcoming")
+    .sort((a, b) => new Date(a.slot_start).getTime() - new Date(b.slot_start).getTime());
+  const completed = (rows ?? [])
+    .filter((r) => r.status === "completed")
+    .sort((a, b) => new Date(b.slot_start).getTime() - new Date(a.slot_start).getTime());
 
   return (
     <div className="container mx-auto max-w-4xl px-4 py-10">
