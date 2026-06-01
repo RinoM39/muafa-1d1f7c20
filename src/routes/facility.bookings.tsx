@@ -51,8 +51,7 @@ function FacilityBookings() {
     const { data } = await supabase
       .from("bookings")
       .select("id,user_id,slot_start,status,price,report_url,facility:facilities(id,name)")
-      .in("facility_id", ids)
-      .order("slot_start", { ascending: false });
+      .in("facility_id", ids);
     const list = (data as unknown as Row[]) ?? [];
     const userIds = Array.from(new Set(list.map((r) => r.user_id)));
     if (userIds.length > 0) {
