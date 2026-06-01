@@ -200,6 +200,13 @@ function BookingCard({ r, onEnd }: { r: Row; onEnd: (reportUrl: string) => Promi
           </div>
         </DialogContent>
       </Dialog>
+      ) : (
+        <Button size="sm" variant="outline" disabled className="w-full sm:w-auto">
+          Not started yet / لم يبدأ بعد
+        </Button>
+      )}
+
+
 
 
       <Dialog open={rateOpen} onOpenChange={setRateOpen}>
