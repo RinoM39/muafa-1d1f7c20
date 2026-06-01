@@ -127,7 +127,19 @@ function FacilityBookings() {
   );
 }
 
+function timeUntil(iso: string): string {
+  const diff = new Date(iso).getTime() - Date.now();
+  if (diff <= 0) return "now";
+  const mins = Math.round(diff / 60000);
+  if (mins < 60) return `in ${mins}m`;
+  const hours = Math.round(mins / 60);
+  if (hours < 24) return `in ${hours}h`;
+  const days = Math.round(hours / 24);
+  return `in ${days}d`;
+}
+
 function BookingCard({ r, onEnd }: { r: Row; onEnd: (reportUrl: string) => Promise<void> | void }) {
+
   const [open, setOpen] = useState(false);
   const [reportUrl, setReportUrl] = useState("");
   const [busy, setBusy] = useState(false);
