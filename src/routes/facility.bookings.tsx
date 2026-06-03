@@ -135,6 +135,27 @@ function FacilityBookings() {
     </div>
   );
 }
+function statusBadge(status: string, slotStart?: string) {
+  const map: Record<string, { label: string; cls: string; Icon: typeof CheckCircle2 }> = {
+    upcoming: { label: "Confirmed / مؤكد", cls: "bg-primary/10 text-primary border-primary/20", Icon: CheckCircle2 },
+    in_progress: { label: "In progress / جارية", cls: "bg-warning/10 text-warning border-warning/20", Icon: Clock },
+    completed: { label: "Completed / مكتمل", cls: "bg-success/10 text-success border-success/20", Icon: CheckCircle2 },
+    cancelled: { label: "Cancelled", cls: "bg-destructive/10 text-destructive border-destructive/20", Icon: AlertCircle },
+  };
+  let effective = status;
+  if (status === "upcoming" && slotStart && new Date(slotStart).getTime() <= Date.now()) {
+    effective = "in_progress";
+  }
+  const m = map[effective] ?? { label: effective, cls: "bg-muted text-foreground border-border", Icon: AlertCircle };
+  const Icon = m.Icon;
+  return (
+    <Badge variant="outline" className={`gap-1 ${m.cls}`}>
+      <Icon className="h-3 w-3" />
+      {m.label}
+    </Badge>
+  );
+}
+
 
 function timeUntil(iso: string): string {
   const diff = new Date(iso).getTime() - Date.now();
