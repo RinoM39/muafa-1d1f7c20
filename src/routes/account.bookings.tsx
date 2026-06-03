@@ -191,14 +191,19 @@ function BookingsPage() {
   );
 }
 
-function statusBadge(status: string) {
+function statusBadge(status: string, slotStart?: string) {
   const map: Record<string, { label: string; cls: string; Icon: typeof CheckCircle2 }> = {
-    upcoming: { label: "Confirmed", cls: "bg-primary/10 text-primary border-primary/20", Icon: CheckCircle2 },
+    upcoming: { label: "Confirmed / مؤكد", cls: "bg-primary/10 text-primary border-primary/20", Icon: CheckCircle2 },
+    in_progress: { label: "In progress / جارية", cls: "bg-warning/10 text-warning border-warning/20", Icon: Clock },
     pending: { label: "Pending", cls: "bg-warning/10 text-warning border-warning/20", Icon: Clock },
-    completed: { label: "Completed", cls: "bg-success/10 text-success border-success/20", Icon: CheckCircle2 },
+    completed: { label: "Completed / مكتمل", cls: "bg-success/10 text-success border-success/20", Icon: CheckCircle2 },
     cancelled: { label: "Cancelled", cls: "bg-destructive/10 text-destructive border-destructive/20", Icon: AlertCircle },
   };
-  const m = map[status] ?? { label: status, cls: "bg-muted text-foreground border-border", Icon: AlertCircle };
+  let effective = status;
+  if (status === "upcoming" && slotStart && new Date(slotStart).getTime() <= Date.now()) {
+    effective = "in_progress";
+  }
+  const m = map[effective] ?? { label: effective, cls: "bg-muted text-foreground border-border", Icon: AlertCircle };
   const Icon = m.Icon;
   return (
     <Badge variant="outline" className={`gap-1 ${m.cls}`}>
@@ -220,7 +225,7 @@ function BookingCard({ b, onOpen }: { b: BookingRow; onOpen: () => void }) {
       <div className="flex-1 min-w-0">
         <h3 className="truncate font-semibold">{b.facility?.name ?? "—"}</h3>
         <p className="text-sm text-muted-foreground">{new Date(b.slot_start).toLocaleString()}</p>
-        <div className="mt-1">{statusBadge(b.status)}</div>
+        <div className="mt-1">{statusBadge(b.status, b.slot_start)}</div>
       </div>
       <div className="font-semibold">{Number(b.price).toFixed(2)}</div>
     </Card>
@@ -261,7 +266,7 @@ function BookingDetailsDialog({
                     <DialogTitle className="truncate text-2xl font-bold">{f?.name ?? "—"}</DialogTitle>
                   </DialogHeader>
                 </div>
-                {statusBadge(booking.status)}
+                {statusBadge(booking.status, booking.slot_start)}
               </div>
             </div>
 
