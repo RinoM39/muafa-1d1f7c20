@@ -225,7 +225,7 @@ function BookingCard({ b, onOpen }: { b: BookingRow; onOpen: () => void }) {
       <div className="flex-1 min-w-0">
         <h3 className="truncate font-semibold">{b.facility?.name ?? "—"}</h3>
         <p className="text-sm text-muted-foreground">{new Date(b.slot_start).toLocaleString()}</p>
-        <div className="mt-1">{statusBadge(b.status)}</div>
+        <div className="mt-1">{statusBadge(b.status, b.slot_start)}</div>
       </div>
       <div className="font-semibold">{Number(b.price).toFixed(2)}</div>
     </Card>
