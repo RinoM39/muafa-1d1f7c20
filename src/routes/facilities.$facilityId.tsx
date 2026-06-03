@@ -10,7 +10,7 @@ import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/lib/auth-context";
 import { generateUpcomingDays, formatDay, formatSlotTime, type ScheduleConfig } from "@/lib/slots";
-import { createBooking } from "@/server/bookings.functions";
+import { createBooking } from "@/lib/bookings.functions";
 
 export const Route = createFileRoute("/facilities/$facilityId")({
   component: FacilityDetails,

@@ -18,8 +18,8 @@ import {
 } from "@/components/ui/dialog";
 import { Star, Upload, FileText, CheckCircle2, ShieldCheck, Loader2 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
-import { endSession } from "@/server/sessions.functions";
-import { submitRating } from "@/server/ratings.functions";
+import { endSession } from "@/lib/sessions.functions";
+import { submitRating } from "@/lib/ratings.functions";
 
 export const Route = createFileRoute("/facility/bookings")({
   beforeLoad: () => requireAuth("/facility/bookings"),

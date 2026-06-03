@@ -28,7 +28,7 @@ import {
   X,
   Lock,
 } from "lucide-react";
-import { submitRating } from "@/server/ratings.functions";
+import { submitRating } from "@/lib/ratings.functions";
 
 export const Route = createFileRoute("/account/bookings")({
   beforeLoad: () => requireAuth("/account/bookings"),
