@@ -16,7 +16,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Star, Upload, FileText, CheckCircle2, ShieldCheck, Loader2 } from "lucide-react";
+import { Star, Upload, FileText, CheckCircle2, ShieldCheck, Loader2, Clock, AlertCircle } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { endSession } from "@/lib/sessions.functions";
 import { submitRating } from "@/lib/ratings.functions";
