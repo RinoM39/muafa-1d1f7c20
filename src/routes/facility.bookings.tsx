@@ -63,7 +63,14 @@ function FacilityBookings() {
     setRows(list);
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+    const channel = supabase
+      .channel("facility-bookings")
+      .on("postgres_changes", { event: "*", schema: "public", table: "bookings" }, () => load())
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, []);
 
   const upcoming = (rows ?? [])
     .filter((r) => r.status === "upcoming")
