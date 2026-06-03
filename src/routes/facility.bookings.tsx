@@ -166,13 +166,14 @@ function BookingCard({ r, onEnd }: { r: Row; onEnd: (reportUrl: string) => Promi
     <Card className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between">
       <div className="min-w-0">
         <h3 className="truncate font-semibold">{r.user?.full_name ?? "Patient"}</h3>
-        <p className="text-sm text-muted-foreground">
-          {new Date(r.slot_start).toLocaleString()}
-          <span className={`ms-2 inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${started ? "bg-success/15 text-success" : "bg-primary/10 text-primary"}`}>
-            {started ? "In progress / جارية" : `Scheduled / مجدول · ${timeUntil(r.slot_start)}`}
-          </span>
-        </p>
-        {r.user?.phone && <p className="text-xs text-muted-foreground">{r.user.phone}</p>}
+        <p className="text-sm text-muted-foreground">{new Date(r.slot_start).toLocaleString()}</p>
+        <div className="mt-1 flex flex-wrap items-center gap-2">
+          {statusBadge(r.status, r.slot_start)}
+          {!started && (
+            <span className="text-xs text-muted-foreground">{timeUntil(r.slot_start)}</span>
+          )}
+        </div>
+        {r.user?.phone && <p className="mt-1 text-xs text-muted-foreground">{r.user.phone}</p>}
       </div>
       {started ? (
       <Dialog open={open} onOpenChange={setOpen}>
