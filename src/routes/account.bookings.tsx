@@ -266,7 +266,7 @@ function BookingDetailsDialog({
                     <DialogTitle className="truncate text-2xl font-bold">{f?.name ?? "—"}</DialogTitle>
                   </DialogHeader>
                 </div>
-                {statusBadge(booking.status)}
+                {statusBadge(booking.status, booking.slot_start)}
               </div>
             </div>
 
