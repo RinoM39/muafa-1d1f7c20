@@ -114,6 +114,7 @@ function FacilityBookings() {
                 <div>
                   <h3 className="font-semibold">{r.user?.full_name ?? "Patient"}</h3>
                   <p className="text-sm text-muted-foreground">{new Date(r.slot_start).toLocaleString()}</p>
+                  <div className="mt-1">{statusBadge(r.status, r.slot_start)}</div>
                 </div>
                 <RateUserButton
                   onSubmit={async (stars, comment) => {
