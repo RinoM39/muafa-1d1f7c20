@@ -31,6 +31,7 @@ interface Row {
   id: string;
   user_id: string;
   slot_start: string;
+  slot_end: string;
   status: string;
   price: number;
   report_url: string | null;
@@ -52,7 +53,7 @@ function FacilityBookings() {
     if (ids.length === 0) { setRows([]); return; }
     const { data } = await supabase
       .from("bookings")
-      .select("id,user_id,slot_start,status,price,report_url,facility:facilities(id,name)")
+      .select("id,user_id,slot_start,slot_end,status,price,report_url,facility:facilities(id,name)")
       .in("facility_id", ids);
     const list = (data as unknown as Row[]) ?? [];
     const userIds = Array.from(new Set(list.map((r) => r.user_id)));
@@ -79,15 +80,18 @@ function FacilityBookings() {
     return () => clearInterval(id);
   }, []);
 
+  const startOf = (r: Row) => new Date(r.slot_start).getTime();
+  const endOf = (r: Row) => new Date(r.slot_end).getTime();
+
   const upcoming = (rows ?? [])
-    .filter((r) => r.status === "upcoming" && new Date(r.slot_start).getTime() > now)
-    .sort((a, b) => new Date(a.slot_start).getTime() - new Date(b.slot_start).getTime());
+    .filter((r) => r.status === "upcoming" && startOf(r) > now)
+    .sort((a, b) => startOf(a) - startOf(b));
   const active = (rows ?? [])
-    .filter((r) => r.status === "upcoming" && new Date(r.slot_start).getTime() <= now)
-    .sort((a, b) => new Date(a.slot_start).getTime() - new Date(b.slot_start).getTime());
+    .filter((r) => r.status === "upcoming" && startOf(r) <= now && endOf(r) > now)
+    .sort((a, b) => startOf(a) - startOf(b));
   const completed = (rows ?? [])
-    .filter((r) => r.status === "completed")
-    .sort((a, b) => new Date(b.slot_start).getTime() - new Date(a.slot_start).getTime());
+    .filter((r) => r.status === "completed" || (r.status === "upcoming" && endOf(r) <= now))
+    .sort((a, b) => startOf(b) - startOf(a));
 
   return (
     <div className="container mx-auto max-w-4xl px-4 py-10">
