@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.enforce_facility_booking_update() FROM anon, authenticated, public;
