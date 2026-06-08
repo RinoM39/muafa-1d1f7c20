@@ -289,6 +289,45 @@ function BookingCard({ r, onEnd }: { r: Row; onEnd: (reportUrl: string) => Promi
   );
 }
 
+function CompleteButton({ onEnd }: { onEnd: (reportUrl: string) => Promise<void> | void }) {
+  const [open, setOpen] = useState(false);
+  const [reportUrl, setReportUrl] = useState("");
+  const [busy, setBusy] = useState(false);
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button size="sm">Complete Booking / إنهاء الحجز</Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Complete Booking / إنهاء الحجز</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label>Medical report URL (optional)</Label>
+            <Input value={reportUrl} onChange={(e) => setReportUrl(e.target.value)} placeholder="https://…" />
+          </div>
+          <Button
+            className="w-full"
+            disabled={busy}
+            onClick={async () => {
+              setBusy(true);
+              try {
+                await onEnd(reportUrl);
+                setOpen(false);
+              } finally {
+                setBusy(false);
+              }
+            }}
+          >
+            {busy ? "Saving..." : "Confirm / تأكيد"}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function UpcomingCard({ r }: { r: Row }) {
   return (
     <Card className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between">
