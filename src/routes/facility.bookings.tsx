@@ -194,27 +194,15 @@ function BookingCard({ r, onEnd }: { r: Row; onEnd: (reportUrl: string) => Promi
   const [stars, setStars] = useState(5);
   const [comment, setComment] = useState("");
   const rateFn = useServerFn(submitRating);
-  const [now, setNow] = useState(() => Date.now());
-  useEffect(() => {
-    const id = setInterval(() => setNow(Date.now()), 30000);
-    return () => clearInterval(id);
-  }, []);
-  const started = new Date(r.slot_start).getTime() <= now;
 
   return (
     <Card className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between">
       <div className="min-w-0">
         <h3 className="truncate font-semibold">{r.user?.full_name ?? "Patient"}</h3>
         <p className="text-sm text-muted-foreground">{new Date(r.slot_start).toLocaleString()}</p>
-        <div className="mt-1 flex flex-wrap items-center gap-2">
-          {statusBadge(r.status, r.slot_start)}
-          {!started && (
-            <span className="text-xs text-muted-foreground">{timeUntil(r.slot_start)}</span>
-          )}
-        </div>
+        <div className="mt-1">{statusBadge(r.status, r.slot_start)}</div>
         {r.user?.phone && <p className="mt-1 text-xs text-muted-foreground">{r.user.phone}</p>}
       </div>
-      {started ? (
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>
           <Button size="sm" className="w-full sm:w-auto">Complete Booking / إنهاء الحجز</Button>
@@ -248,11 +236,7 @@ function BookingCard({ r, onEnd }: { r: Row; onEnd: (reportUrl: string) => Promi
           </div>
         </DialogContent>
       </Dialog>
-      ) : (
-        <Button size="sm" variant="outline" disabled className="w-full sm:w-auto">
-          Not started yet / لم يبدأ بعد
-        </Button>
-      )}
+
 
 
 
