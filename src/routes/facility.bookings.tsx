@@ -271,6 +271,24 @@ function BookingCard({ r, onEnd }: { r: Row; onEnd: (reportUrl: string) => Promi
   );
 }
 
+function UpcomingCard({ r }: { r: Row }) {
+  return (
+    <Card className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="min-w-0">
+        <h3 className="truncate font-semibold">{r.user?.full_name ?? "Patient"}</h3>
+        <p className="text-sm text-muted-foreground">{new Date(r.slot_start).toLocaleString()}</p>
+        <div className="mt-1 flex flex-wrap items-center gap-2">
+          {statusBadge(r.status, r.slot_start)}
+          <span className="text-xs text-muted-foreground">{timeUntil(r.slot_start)}</span>
+        </div>
+        {r.user?.phone && <p className="mt-1 text-xs text-muted-foreground">{r.user.phone}</p>}
+      </div>
+    </Card>
+  );
+}
+
+
+
 function RateUserButton({ onSubmit }: { onSubmit: (stars: number, comment: string) => Promise<void> }) {
   const [open, setOpen] = useState(false);
   const [stars, setStars] = useState(5);
