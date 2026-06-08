@@ -40,6 +40,7 @@ interface Row {
 
 function FacilityBookings() {
   const [rows, setRows] = useState<Row[] | null>(null);
+  const [now, setNow] = useState(() => Date.now());
   const endFn = useServerFn(endSession);
   const rateFn = useServerFn(submitRating);
 
@@ -73,8 +74,16 @@ function FacilityBookings() {
     return () => { supabase.removeChannel(channel); };
   }, []);
 
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 30000);
+    return () => clearInterval(id);
+  }, []);
+
   const upcoming = (rows ?? [])
-    .filter((r) => r.status === "upcoming")
+    .filter((r) => r.status === "upcoming" && new Date(r.slot_start).getTime() > now)
+    .sort((a, b) => new Date(a.slot_start).getTime() - new Date(b.slot_start).getTime());
+  const active = (rows ?? [])
+    .filter((r) => r.status === "upcoming" && new Date(r.slot_start).getTime() <= now)
     .sort((a, b) => new Date(a.slot_start).getTime() - new Date(b.slot_start).getTime());
   const completed = (rows ?? [])
     .filter((r) => r.status === "completed")
@@ -83,14 +92,21 @@ function FacilityBookings() {
   return (
     <div className="container mx-auto max-w-4xl px-4 py-10">
       <h1 className="text-3xl font-bold">Facility Bookings</h1>
-      <Tabs defaultValue="upcoming" className="mt-6">
+      <Tabs defaultValue={active.length > 0 ? "active" : "upcoming"} className="mt-6">
         <TabsList>
-          <TabsTrigger value="upcoming">Upcoming Bookings ({upcoming.length})</TabsTrigger>
-          <TabsTrigger value="completed">Completed Bookings ({completed.length})</TabsTrigger>
+          <TabsTrigger value="upcoming">Upcoming ({upcoming.length})</TabsTrigger>
+          <TabsTrigger value="active">Active ({active.length})</TabsTrigger>
+          <TabsTrigger value="completed">Completed ({completed.length})</TabsTrigger>
         </TabsList>
         <TabsContent value="upcoming" className="mt-4 space-y-3">
           {upcoming.length === 0 && <p className="text-sm text-muted-foreground">No upcoming bookings.</p>}
           {upcoming.map((r) => (
+            <UpcomingCard key={r.id} r={r} />
+          ))}
+        </TabsContent>
+        <TabsContent value="active" className="mt-4 space-y-3">
+          {active.length === 0 && <p className="text-sm text-muted-foreground">No active bookings right now.</p>}
+          {active.map((r) => (
             <BookingCard
               key={r.id}
               r={r}
@@ -106,6 +122,7 @@ function FacilityBookings() {
             />
           ))}
         </TabsContent>
+
         <TabsContent value="completed" className="mt-4 space-y-3">
           {completed.length === 0 && <p className="text-sm text-muted-foreground">No completed bookings yet.</p>}
           {completed.map((r) => (
@@ -177,27 +194,15 @@ function BookingCard({ r, onEnd }: { r: Row; onEnd: (reportUrl: string) => Promi
   const [stars, setStars] = useState(5);
   const [comment, setComment] = useState("");
   const rateFn = useServerFn(submitRating);
-  const [now, setNow] = useState(() => Date.now());
-  useEffect(() => {
-    const id = setInterval(() => setNow(Date.now()), 30000);
-    return () => clearInterval(id);
-  }, []);
-  const started = new Date(r.slot_start).getTime() <= now;
 
   return (
     <Card className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between">
       <div className="min-w-0">
         <h3 className="truncate font-semibold">{r.user?.full_name ?? "Patient"}</h3>
         <p className="text-sm text-muted-foreground">{new Date(r.slot_start).toLocaleString()}</p>
-        <div className="mt-1 flex flex-wrap items-center gap-2">
-          {statusBadge(r.status, r.slot_start)}
-          {!started && (
-            <span className="text-xs text-muted-foreground">{timeUntil(r.slot_start)}</span>
-          )}
-        </div>
+        <div className="mt-1">{statusBadge(r.status, r.slot_start)}</div>
         {r.user?.phone && <p className="mt-1 text-xs text-muted-foreground">{r.user.phone}</p>}
       </div>
-      {started ? (
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>
           <Button size="sm" className="w-full sm:w-auto">Complete Booking / إنهاء الحجز</Button>
@@ -231,11 +236,7 @@ function BookingCard({ r, onEnd }: { r: Row; onEnd: (reportUrl: string) => Promi
           </div>
         </DialogContent>
       </Dialog>
-      ) : (
-        <Button size="sm" variant="outline" disabled className="w-full sm:w-auto">
-          Not started yet / لم يبدأ بعد
-        </Button>
-      )}
+
 
 
 
@@ -269,6 +270,24 @@ function BookingCard({ r, onEnd }: { r: Row; onEnd: (reportUrl: string) => Promi
     </Card>
   );
 }
+
+function UpcomingCard({ r }: { r: Row }) {
+  return (
+    <Card className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="min-w-0">
+        <h3 className="truncate font-semibold">{r.user?.full_name ?? "Patient"}</h3>
+        <p className="text-sm text-muted-foreground">{new Date(r.slot_start).toLocaleString()}</p>
+        <div className="mt-1 flex flex-wrap items-center gap-2">
+          {statusBadge(r.status, r.slot_start)}
+          <span className="text-xs text-muted-foreground">{timeUntil(r.slot_start)}</span>
+        </div>
+        {r.user?.phone && <p className="mt-1 text-xs text-muted-foreground">{r.user.phone}</p>}
+      </div>
+    </Card>
+  );
+}
+
+
 
 function RateUserButton({ onSubmit }: { onSubmit: (stars: number, comment: string) => Promise<void> }) {
   const [open, setOpen] = useState(false);
