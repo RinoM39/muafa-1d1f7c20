@@ -137,18 +137,32 @@ function FacilityBookings() {
                   <p className="text-sm text-muted-foreground">{new Date(r.slot_start).toLocaleString()}</p>
                   <div className="mt-1">{statusBadge(r.status, r.slot_start)}</div>
                 </div>
-                <RateUserButton
-                  onSubmit={async (stars, comment) => {
-                    try {
-                      await rateFn({ data: { bookingId: r.id, stars, comment, direction: "facility_to_user" } });
-                      toast.success("Rating submitted");
-                    } catch (e) {
-                      toast.error(e instanceof Error ? e.message : "Failed");
-                    }
-                  }}
-                />
+                {r.status === "completed" ? (
+                  <RateUserButton
+                    onSubmit={async (stars, comment) => {
+                      try {
+                        await rateFn({ data: { bookingId: r.id, stars, comment, direction: "facility_to_user" } });
+                        toast.success("Rating submitted");
+                      } catch (e) {
+                        toast.error(e instanceof Error ? e.message : "Failed");
+                      }
+                    }}
+                  />
+                ) : (
+                  <CompleteButton
+                    onEnd={async (reportUrl) => {
+                      try {
+                        await endFn({ data: { bookingId: r.id, reportUrl: reportUrl || null } });
+                        toast.success("Session marked as completed");
+                        load();
+                      } catch (e) {
+                        toast.error(e instanceof Error ? e.message : "Failed");
+                      }
+                    }}
+                  />
+                )}
               </div>
-              <ReportUploader bookingId={r.id} onSaved={load} />
+              {r.status === "completed" && <ReportUploader bookingId={r.id} onSaved={load} />}
             </Card>
           ))}
         </TabsContent>
