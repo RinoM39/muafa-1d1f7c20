@@ -53,7 +53,7 @@ function FacilityBookings() {
     if (ids.length === 0) { setRows([]); return; }
     const { data } = await supabase
       .from("bookings")
-      .select("id,user_id,slot_start,slot_end,status,price,report_url,facility:facilities(id,name)")
+      .select("id,user_id,slot_start,slot_end,status,price,report_url,facility:facilities!bookings_facility_id_fkey(id,name)")
       .in("facility_id", ids);
     const list = (data as unknown as Row[]) ?? [];
     const userIds = Array.from(new Set(list.map((r) => r.user_id)));

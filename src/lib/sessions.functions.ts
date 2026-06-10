@@ -20,7 +20,7 @@ export const endSession = createServerFn({ method: "POST" })
 
     const { data: booking } = await supabaseAdmin
       .from("bookings")
-      .select("id,user_id,facility_id,price,status,facility:facilities(owner_id,name)")
+      .select("id,user_id,facility_id,price,status,facility:facilities!bookings_facility_id_fkey(owner_id,name)")
       .eq("id", data.bookingId)
       .maybeSingle();
     if (!booking) throw new Error("Booking not found");
