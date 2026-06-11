@@ -1,11 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
-import { Star, MapPin } from "lucide-react";
+import { Star, MapPin, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Input } from "@/components/ui/input";
 
 export const Route = createFileRoute("/facilities/")({
   head: () => ({
@@ -31,6 +32,7 @@ interface FacilityRow {
 function FacilitiesList() {
   const { t } = useTranslation();
   const [facilities, setFacilities] = useState<FacilityRow[] | null>(null);
+  const [query, setQuery] = useState("");
 
   useEffect(() => {
     supabase
@@ -42,9 +44,31 @@ function FacilitiesList() {
       .then(({ data }) => setFacilities(data ?? []));
   }, []);
 
+  const filtered = useMemo(() => {
+    if (!facilities) return null;
+    const q = query.trim().toLowerCase();
+    if (!q) return facilities;
+    return facilities.filter(
+      (f) =>
+        f.name.toLowerCase().includes(q) ||
+        (f.description ?? "").toLowerCase().includes(q),
+    );
+  }, [facilities, query]);
+
   return (
     <div className="container mx-auto px-4 py-10">
       <h1 className="text-3xl font-bold">{t("facilities.title")}</h1>
+
+      <div className="relative mt-6 max-w-xl">
+        <Search className="pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder={t("common.search")}
+          className="h-11 ps-9"
+        />
+      </div>
+
 
       {facilities === null && (
         <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -54,15 +78,15 @@ function FacilitiesList() {
         </div>
       )}
 
-      {facilities && facilities.length === 0 && (
+      {filtered && filtered.length === 0 && (
         <div className="mt-12 rounded-xl border border-dashed p-12 text-center text-muted-foreground">
           {t("facilities.empty")}
         </div>
       )}
 
-      {facilities && facilities.length > 0 && (
+      {filtered && filtered.length > 0 && (
         <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {facilities.map((f) => (
+          {filtered.map((f) => (
             <Card key={f.id} className="group overflow-hidden p-0 transition-shadow hover:shadow-[var(--shadow-elegant)]">
               <div className="relative aspect-[4/3] w-full overflow-hidden bg-muted">
                 {f.image_url ? (
