@@ -32,6 +32,7 @@ interface FacilityRow {
 function FacilitiesList() {
   const { t } = useTranslation();
   const [facilities, setFacilities] = useState<FacilityRow[] | null>(null);
+  const [query, setQuery] = useState("");
 
   useEffect(() => {
     supabase
@@ -43,9 +44,31 @@ function FacilitiesList() {
       .then(({ data }) => setFacilities(data ?? []));
   }, []);
 
+  const filtered = useMemo(() => {
+    if (!facilities) return null;
+    const q = query.trim().toLowerCase();
+    if (!q) return facilities;
+    return facilities.filter(
+      (f) =>
+        f.name.toLowerCase().includes(q) ||
+        (f.description ?? "").toLowerCase().includes(q),
+    );
+  }, [facilities, query]);
+
   return (
     <div className="container mx-auto px-4 py-10">
       <h1 className="text-3xl font-bold">{t("facilities.title")}</h1>
+
+      <div className="relative mt-6 max-w-xl">
+        <Search className="pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder={t("common.search")}
+          className="h-11 ps-9"
+        />
+      </div>
+
 
       {facilities === null && (
         <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
