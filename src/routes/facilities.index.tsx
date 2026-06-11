@@ -78,15 +78,15 @@ function FacilitiesList() {
         </div>
       )}
 
-      {facilities && facilities.length === 0 && (
+      {filtered && filtered.length === 0 && (
         <div className="mt-12 rounded-xl border border-dashed p-12 text-center text-muted-foreground">
           {t("facilities.empty")}
         </div>
       )}
 
-      {facilities && facilities.length > 0 && (
+      {filtered && filtered.length > 0 && (
         <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {facilities.map((f) => (
+          {filtered.map((f) => (
             <Card key={f.id} className="group overflow-hidden p-0 transition-shadow hover:shadow-[var(--shadow-elegant)]">
               <div className="relative aspect-[4/3] w-full overflow-hidden bg-muted">
                 {f.image_url ? (
