@@ -333,6 +333,7 @@ function UpcomingCard({ r }: { r: Row }) {
     <Card className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between">
       <div className="min-w-0">
         <h3 className="truncate font-semibold">{r.user?.full_name ?? "Patient"}</h3>
+        {r.facility?.name && <p className="text-sm font-medium text-primary">{r.facility.name}</p>}
         <p className="text-sm text-muted-foreground">{new Date(r.slot_start).toLocaleString()}</p>
         <div className="mt-1 flex flex-wrap items-center gap-2">
           {statusBadge(r.status, r.slot_start)}
