@@ -134,6 +134,7 @@ function FacilityBookings() {
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <h3 className="font-semibold">{r.user?.full_name ?? "Patient"}</h3>
+                  {r.facility?.name && <p className="text-sm font-medium text-primary">{r.facility.name}</p>}
                   <p className="text-sm text-muted-foreground">{new Date(r.slot_start).toLocaleString()}</p>
                   <div className="mt-1">{statusBadge(r.status, r.slot_start)}</div>
                 </div>
