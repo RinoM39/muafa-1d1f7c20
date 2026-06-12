@@ -1,6 +1,8 @@
+import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
-import { CalendarCheck, Wallet, FileText, ArrowLeft, ArrowRight } from "lucide-react";
+import { CalendarCheck, Wallet, FileText, ArrowLeft, ArrowRight, Download } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
@@ -18,10 +20,44 @@ export const Route = createFileRoute("/")({
   component: Index,
 });
 
+interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
+}
+
 function Index() {
   const { t, i18n } = useTranslation();
   const isRtl = i18n.language === "ar";
   const Arrow = isRtl ? ArrowLeft : ArrowRight;
+  const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+
+  useEffect(() => {
+    const handleInstallPrompt = (event: Event) => {
+      event.preventDefault();
+      setInstallPrompt(event as BeforeInstallPromptEvent);
+    };
+    const handleInstalled = () => {
+      setInstallPrompt(null);
+      toast.success(t("home.installSuccess"));
+    };
+
+    window.addEventListener("beforeinstallprompt", handleInstallPrompt);
+    window.addEventListener("appinstalled", handleInstalled);
+    return () => {
+      window.removeEventListener("beforeinstallprompt", handleInstallPrompt);
+      window.removeEventListener("appinstalled", handleInstalled);
+    };
+  }, [t]);
+
+  const installApp = async () => {
+    if (!installPrompt) {
+      toast.info(t("home.installHelp"));
+      return;
+    }
+    await installPrompt.prompt();
+    const { outcome } = await installPrompt.userChoice;
+    if (outcome === "accepted") setInstallPrompt(null);
+  };
 
   return (
     <div>
@@ -44,12 +80,13 @@ function Index() {
               </Link>
             </Button>
             <Button
-              asChild
               size="lg"
               variant="outline"
               className="border-primary-foreground/40 bg-transparent text-primary-foreground hover:bg-primary-foreground/10"
+              onClick={installApp}
             >
-              <Link to="/register">{t("home.ctaJoin")}</Link>
+              <Download className="h-4 w-4" />
+              {t("home.ctaInstall")}
             </Button>
           </div>
         </div>
