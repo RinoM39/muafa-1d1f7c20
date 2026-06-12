@@ -37,6 +37,10 @@ export const Route = createRootRoute({
           "Mu'afa (مُعافى) — book appointments at radiology centers, labs, and clinics. Secure wallet, instant booking, medical reports.",
       },
       { name: "theme-color", content: "#5A9789" },
+      { name: "mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
+      { name: "apple-mobile-web-app-title", content: "مُعافى" },
       { property: "og:title", content: "مُعافى — Mu'afa | احجز موعدك الطبي" },
       { property: "og:description", content: "Mu'afa Health Connect is a medical booking platform for users and facilities." },
       { property: "og:type", content: "website" },
@@ -49,6 +53,9 @@ export const Route = createRootRoute({
     ],
     links: [
       { rel: "stylesheet", href: appCss },
+      { rel: "manifest", href: "/manifest.webmanifest" },
+      { rel: "icon", type: "image/png", sizes: "192x192", href: "/icons/muafa-192.png" },
+      { rel: "apple-touch-icon", sizes: "180x180", href: "/icons/muafa-180.png" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
