@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { CalendarCheck, Wallet, FileText, ArrowLeft, ArrowRight, Download } from "lucide-react";
-import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
@@ -38,7 +37,6 @@ function Index() {
     };
     const handleInstalled = () => {
       setInstallPrompt(null);
-      toast.success(t("home.installSuccess"));
     };
 
     window.addEventListener("beforeinstallprompt", handleInstallPrompt);
@@ -47,13 +45,10 @@ function Index() {
       window.removeEventListener("beforeinstallprompt", handleInstallPrompt);
       window.removeEventListener("appinstalled", handleInstalled);
     };
-  }, [t]);
+  }, []);
 
   const installApp = async () => {
-    if (!installPrompt) {
-      toast.info(t("home.installHelp"));
-      return;
-    }
+    if (!installPrompt) return;
     await installPrompt.prompt();
     const { outcome } = await installPrompt.userChoice;
     if (outcome === "accepted") setInstallPrompt(null);
