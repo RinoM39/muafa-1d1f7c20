@@ -1,6 +1,8 @@
+import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
-import { CalendarCheck, Wallet, FileText, ArrowLeft, ArrowRight } from "lucide-react";
+import { CalendarCheck, Wallet, FileText, ArrowLeft, ArrowRight, Download } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
@@ -18,10 +20,44 @@ export const Route = createFileRoute("/")({
   component: Index,
 });
 
+interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
+}
+
 function Index() {
   const { t, i18n } = useTranslation();
   const isRtl = i18n.language === "ar";
   const Arrow = isRtl ? ArrowLeft : ArrowRight;
+  const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+
+  useEffect(() => {
+    const handleInstallPrompt = (event: Event) => {
+      event.preventDefault();
+      setInstallPrompt(event as BeforeInstallPromptEvent);
+    };
+    const handleInstalled = () => {
+      setInstallPrompt(null);
+      toast.success(t("home.installSuccess"));
+    };
+
+    window.addEventListener("beforeinstallprompt", handleInstallPrompt);
+    window.addEventListener("appinstalled", handleInstalled);
+    return () => {
+      window.removeEventListener("beforeinstallprompt", handleInstallPrompt);
+      window.removeEventListener("appinstalled", handleInstalled);
+    };
+  }, [t]);
+
+  const installApp = async () => {
+    if (!installPrompt) {
+      toast.info(t("home.installHelp"));
+      return;
+    }
+    await installPrompt.prompt();
+    const { outcome } = await installPrompt.userChoice;
+    if (outcome === "accepted") setInstallPrompt(null);
+  };
 
   return (
     <div>
@@ -37,19 +73,25 @@ function Index() {
             {t("home.heroSubtitle")}
           </p>
           <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
-            <Button asChild size="lg" variant="secondary" className="shadow-[var(--shadow-elegant)]">
+            <Button
+              asChild
+              size="lg"
+              variant="secondary"
+              className="shadow-[var(--shadow-elegant)]"
+            >
               <Link to="/facilities">
                 {t("home.ctaBrowse")}
                 <Arrow className="ms-2 h-4 w-4" />
               </Link>
             </Button>
             <Button
-              asChild
               size="lg"
               variant="outline"
               className="border-primary-foreground/40 bg-transparent text-primary-foreground hover:bg-primary-foreground/10"
+              onClick={installApp}
             >
-              <Link to="/register">{t("home.ctaJoin")}</Link>
+              <Download className="h-4 w-4" />
+              {t("home.ctaInstall")}
             </Button>
           </div>
         </div>
@@ -63,7 +105,10 @@ function Index() {
             { icon: Wallet, title: t("home.feature2Title"), desc: t("home.feature2Desc") },
             { icon: FileText, title: t("home.feature3Title"), desc: t("home.feature3Desc") },
           ].map((f) => (
-            <Card key={f.title} className="p-6 transition-shadow hover:shadow-[var(--shadow-elegant)]">
+            <Card
+              key={f.title}
+              className="p-6 transition-shadow hover:shadow-[var(--shadow-elegant)]"
+            >
               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[image:var(--gradient-primary)] text-primary-foreground">
                 <f.icon className="h-6 w-6" />
               </div>
