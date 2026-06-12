@@ -32,5 +32,7 @@ export function subscribeToInstallPrompt(
 ) {
   listeners.add(listener);
   listener(deferredPrompt);
-  return () => listeners.delete(listener);
+  return () => {
+    listeners.delete(listener);
+  };
 }
