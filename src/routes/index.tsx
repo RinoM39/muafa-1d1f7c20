@@ -73,7 +73,12 @@ function Index() {
             {t("home.heroSubtitle")}
           </p>
           <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
-            <Button asChild size="lg" variant="secondary" className="shadow-[var(--shadow-elegant)]">
+            <Button
+              asChild
+              size="lg"
+              variant="secondary"
+              className="shadow-[var(--shadow-elegant)]"
+            >
               <Link to="/facilities">
                 {t("home.ctaBrowse")}
                 <Arrow className="ms-2 h-4 w-4" />
@@ -100,7 +105,10 @@ function Index() {
             { icon: Wallet, title: t("home.feature2Title"), desc: t("home.feature2Desc") },
             { icon: FileText, title: t("home.feature3Title"), desc: t("home.feature3Desc") },
           ].map((f) => (
-            <Card key={f.title} className="p-6 transition-shadow hover:shadow-[var(--shadow-elegant)]">
+            <Card
+              key={f.title}
+              className="p-6 transition-shadow hover:shadow-[var(--shadow-elegant)]"
+            >
               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[image:var(--gradient-primary)] text-primary-foreground">
                 <f.icon className="h-6 w-6" />
               </div>
