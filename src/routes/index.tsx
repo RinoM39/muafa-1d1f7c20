@@ -4,6 +4,11 @@ import { useTranslation } from "react-i18next";
 import { CalendarCheck, Wallet, FileText, ArrowLeft, ArrowRight, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import {
+  getInstallPrompt,
+  subscribeToInstallPrompt,
+  type BeforeInstallPromptEvent,
+} from "@/lib/pwa-install";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -19,11 +24,6 @@ export const Route = createFileRoute("/")({
   component: Index,
 });
 
-interface BeforeInstallPromptEvent extends Event {
-  prompt: () => Promise<void>;
-  userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
-}
-
 function Index() {
   const { t, i18n } = useTranslation();
   const isRtl = i18n.language === "ar";
@@ -31,26 +31,14 @@ function Index() {
   const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
 
   useEffect(() => {
-    const handleInstallPrompt = (event: Event) => {
-      event.preventDefault();
-      setInstallPrompt(event as BeforeInstallPromptEvent);
-    };
-    const handleInstalled = () => {
-      setInstallPrompt(null);
-    };
-
-    window.addEventListener("beforeinstallprompt", handleInstallPrompt);
-    window.addEventListener("appinstalled", handleInstalled);
-    return () => {
-      window.removeEventListener("beforeinstallprompt", handleInstallPrompt);
-      window.removeEventListener("appinstalled", handleInstalled);
-    };
+    return subscribeToInstallPrompt(setInstallPrompt);
   }, []);
 
   const installApp = async () => {
-    if (!installPrompt) return;
-    await installPrompt.prompt();
-    const { outcome } = await installPrompt.userChoice;
+    const prompt = installPrompt ?? getInstallPrompt();
+    if (!prompt) return;
+    await prompt.prompt();
+    const { outcome } = await prompt.userChoice;
     if (outcome === "accepted") setInstallPrompt(null);
   };
 
