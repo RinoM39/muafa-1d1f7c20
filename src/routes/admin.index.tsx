@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/admin/")({
+  ssr: false,
   beforeLoad: () => requireAdmin("/admin"),
   component: AdminDashboard,
 });

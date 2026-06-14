@@ -23,6 +23,7 @@ import { endSession } from "@/lib/sessions.functions";
 import { submitRating } from "@/lib/ratings.functions";
 
 export const Route = createFileRoute("/facility/bookings")({
+  ssr: false,
   beforeLoad: () => requireAuth("/facility/bookings"),
   component: FacilityBookings,
 });
