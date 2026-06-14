@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { decideWalletRequest, setBanned } from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/admin/wallet-requests")({
+  ssr: false,
   beforeLoad: () => requireAdmin("/admin/wallet-requests"),
   component: WalletRequestsAdmin,
 });

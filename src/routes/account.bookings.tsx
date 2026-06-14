@@ -29,8 +29,10 @@ import {
   Lock,
 } from "lucide-react";
 import { submitRating } from "@/lib/ratings.functions";
+import { getMedicalReportSignedUrl } from "@/lib/reports.functions";
 
 export const Route = createFileRoute("/account/bookings")({
+  ssr: false,
   beforeLoad: () => requireAuth("/account/bookings"),
   component: BookingsPage,
 });
@@ -105,24 +107,16 @@ function BookingsPage() {
   };
 
   useEffect(() => {
-    let channel: ReturnType<typeof supabase.channel> | null = null;
     let cancelled = false;
     (async () => {
       await load();
-      const { data: u } = await supabase.auth.getUser();
-      if (!u.user || cancelled) return;
-      channel = supabase.channel(`bookings-${u.user.id}-${Math.random().toString(36).slice(2)}`);
-      channel
-        .on(
-          "postgres_changes",
-          { event: "*", schema: "public", table: "bookings", filter: `user_id=eq.${u.user.id}` },
-          () => load(),
-        )
-        .subscribe();
     })();
+    const refresh = window.setInterval(() => {
+      if (!cancelled) void load();
+    }, 30_000);
     return () => {
       cancelled = true;
-      if (channel) supabase.removeChannel(channel);
+      window.clearInterval(refresh);
     };
   }, []);
 
@@ -390,6 +384,7 @@ function MedicalReportSection({ bookingId }: { bookingId: string }) {
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [signedUrl, setSignedUrl] = useState<string | null>(null);
+  const getSignedUrl = useServerFn(getMedicalReportSignedUrl);
 
   useEffect(() => {
     let cancelled = false;
@@ -410,15 +405,13 @@ function MedicalReportSection({ bookingId }: { bookingId: string }) {
 
   const openViewer = async () => {
     if (!report) return;
-    const { data, error } = await supabase.storage
-      .from("medical-reports")
-      .createSignedUrl(report.file_path, 60 * 10);
-    if (error || !data) {
+    try {
+      const data = await getSignedUrl({ data: { bookingId } });
+      setSignedUrl(data.signedUrl);
+      setOpen(true);
+    } catch {
       toast.error("Failed to open report");
-      return;
     }
-    setSignedUrl(data.signedUrl);
-    setOpen(true);
   };
 
   if (loading) {

@@ -14,6 +14,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 const searchSchema = z.object({ id: z.string().uuid().optional() });
 
 export const Route = createFileRoute("/facility/setup")({
+  ssr: false,
   validateSearch: (s) => searchSchema.parse(s),
   beforeLoad: () => requireAuth("/facility/setup"),
   component: FacilitySetup,
