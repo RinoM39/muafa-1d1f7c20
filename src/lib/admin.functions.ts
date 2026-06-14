@@ -1,9 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
-async function assertAdmin(userId: string) {
+async function assertAdmin(userId: string, supabaseAdmin: Awaited<typeof import("@/integrations/supabase/client.server")>["supabaseAdmin"]) {
   const { data } = await supabaseAdmin
     .from("user_roles")
     .select("role")
@@ -23,8 +22,9 @@ export const decideWalletRequest = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => decideInput.parse(d))
   .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { userId } = context;
-    await assertAdmin(userId);
+    await assertAdmin(userId, supabaseAdmin);
 
     const { data: req } = await supabaseAdmin
       .from("wallet_requests").select("id,user_id,amount,status").eq("id", data.requestId).maybeSingle();
@@ -78,7 +78,8 @@ export const setBanned = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => banInput.parse(d))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await assertAdmin(context.userId, supabaseAdmin);
     if (data.targetType === "user") {
       await supabaseAdmin.from("profiles").update({ is_banned: data.banned }).eq("id", data.targetId);
     } else {
