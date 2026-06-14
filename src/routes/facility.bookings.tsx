@@ -68,12 +68,9 @@ function FacilityBookings() {
   };
 
   useEffect(() => {
-    load();
-    const channel = supabase
-      .channel("facility-bookings")
-      .on("postgres_changes", { event: "*", schema: "public", table: "bookings" }, () => load())
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
+    void load();
+    const refresh = window.setInterval(() => void load(), 30_000);
+    return () => window.clearInterval(refresh);
   }, []);
 
   useEffect(() => {
