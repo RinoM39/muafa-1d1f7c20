@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/account/")({
+  ssr: false,
   beforeLoad: () => requireAuth("/account"),
   component: AccountPage,
 });

@@ -9,7 +9,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 
-const searchSchema = z.object({ redirect: z.string().optional() });
+const searchSchema = z.object({
+  redirect: z
+    .string()
+    .max(200)
+    .refine((value) => value.startsWith("/") && !value.startsWith("//"), "Invalid redirect")
+    .optional(),
+});
 
 export const Route = createFileRoute("/login")({
   validateSearch: (s) => searchSchema.parse(s),
@@ -34,7 +40,10 @@ function LoginPage() {
       return;
     }
     toast.success(t("auth.loginSuccess"));
-    navigate({ to: search.redirect ?? "/" });
+    const destination = search.redirect?.startsWith("/") && !search.redirect.startsWith("//")
+      ? search.redirect
+      : "/";
+    navigate({ to: destination });
   };
 
   return (
